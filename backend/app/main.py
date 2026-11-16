@@ -43,6 +43,11 @@ app.include_router(topics.router, prefix="/api")
 app.include_router(crawl.router, prefix="/api")
 
 
+@app.get("/")
+def root() -> dict[str, str]:
+    return {"message": "hello"}
+
+
 @app.get("/api/health", response_model=HealthOut)
 def health() -> HealthOut:
     return HealthOut(status="ok", app=settings.app_name, crawl=scheduler_status())
