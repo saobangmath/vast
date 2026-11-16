@@ -3,10 +3,10 @@ from datetime import datetime
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database import Base
+from app.database import BaseModel
 
 
-class Source(Base):
+class Source(BaseModel):
     __tablename__ = "sources"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -20,7 +20,7 @@ class Source(Base):
     articles: Mapped[list["Article"]] = relationship(back_populates="source")
 
 
-class Topic(Base):
+class Topic(BaseModel):
     __tablename__ = "topics"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -31,7 +31,7 @@ class Topic(Base):
     articles: Mapped[list["Article"]] = relationship(back_populates="topic")
 
 
-class Article(Base):
+class Article(BaseModel):
     __tablename__ = "articles"
     __table_args__ = (UniqueConstraint("canonical_url", name="uq_articles_canonical_url"),)
 
@@ -54,7 +54,7 @@ class Article(Base):
     cluster: Mapped["Cluster | None"] = relationship(back_populates="articles")
 
 
-class Cluster(Base):
+class Cluster(BaseModel):
     __tablename__ = "clusters"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
