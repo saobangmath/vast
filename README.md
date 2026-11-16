@@ -2,32 +2,71 @@
 
 Hybrid portal inspired by [vast.gov.vn](https://vast.gov.vn/) with a Báo Mới–style **Tin nóng KHCN** hub. A backend crawler pulls science/tech stories from an allowlisted set of Vietnamese sources and auto-publishes **summaries + source links** (no full-text republication).
 
-## Stack
+## Stacks — local test vs prod demo
 
-- `frontend/` — Next.js 15 (App Router) + Tailwind
-- `backend/` — FastAPI + SQLAlchemy + SQLite (default) or Postgres
-- `docker-compose.yml` — optional Postgres + API
+### Local test
 
-## Quick start (local)
+| Layer | Technology | Details |
+|-------|------------|---------|
+| **Frontend** | **Next.js 15** (App Router) + React 19 + TypeScript + Tailwind CSS 4 | `make web` → http://localhost:3000 |
+| **Backend** | **FastAPI** (Python) + Uvicorn + SQLAlchemy 2 | `make api` → http://localhost:8000 |
+| **Database** | **SQLite** | File: `backend/data/vast_news.db` (default `DATABASE_URL=sqlite:///./data/vast_news.db`) |
+| **Crawl** | Manual / optional loop | `make crawl` or `make crawl-loop` |
 
-```bash
-make install   # backend venv + frontend deps
-make api       # terminal 1 → http://localhost:8000
-make web       # terminal 2 → http://localhost:3000
+```text
+Browser → localhost:3000 (Next.js)
+              ↓ NEXT_PUBLIC_API_URL=http://localhost:8000
+         localhost:8000 (FastAPI)
+              ↓
+         SQLite (backend/data/vast_news.db)
 ```
 
-**Automatic crawl (production):** GitHub Actions every **1 hour** → `POST /api/crawl/run`  
-(set repo secret `CRAWL_API_BASE_URL`). Optional local loop: `make crawl-loop`.
+```bash
+make install
+make api    # terminal 1
+make web    # terminal 2
+# optional: make crawl   or   make crawl-loop
+```
 
-## Deploy (Vercel + Neon)
+Local env:
 
-See **[DEPLOY.md](DEPLOY.md)**:
+- Backend: `backend/.env` (see `backend/.env.example`) — SQLite by default
+- Frontend: `frontend/.env.local` — `NEXT_PUBLIC_API_URL=http://localhost:8000`
 
-- **Frontend** → Vercel project, Root Directory `frontend`
-- **Backend** → Vercel project, Root Directory `backend`
-- **Postgres** → Neon (`DATABASE_URL` on the backend project)
-- **CI/CD** → Vercel auto-deploys on `main`
-- **Crawl** → GitHub Actions hourly → backend `/api/crawl/run` (not Vercel Cron)
+---
+
+### Prod demo
+
+| Layer | Technology | Details |
+|-------|------------|---------|
+| **Frontend** | **Next.js 15** | Vercel project, Root Directory = `frontend` |
+| **Backend** | **FastAPI** (Python) | Vercel project, Root Directory = `backend` |
+| **Database** | **Neon** (serverless Postgres) | `DATABASE_URL` on the backend Vercel project |
+| **Hosting** | **Vercel** (monorepo → 2 projects) | Auto-deploy on push/merge to `main` |
+| **Crawl** | **GitHub Actions** (hourly) | `POST /api/crawl/run` (secret `CRAWL_API_BASE_URL`) |
+
+```text
+Browser → Vercel (Next.js FE)
+              ↓ NEXT_PUBLIC_API_URL
+         Vercel (FastAPI BE)
+              ↓ DATABASE_URL
+            Neon Postgres
+
+GitHub Actions (hourly) → POST /api/crawl/run → same Neon DB
+```
+
+Prod env:
+
+| Project | Variable | Purpose |
+|---------|----------|---------|
+| Frontend (Vercel) | `NEXT_PUBLIC_API_URL` | Backend URL, e.g. `https://<api>.vercel.app` |
+| Backend (Vercel) | `DATABASE_URL` | Neon Postgres connection string |
+| Backend (Vercel) | `CORS_ORIGINS` / `CORS_ORIGIN_REGEX` | Optional; regex allows `*.vercel.app` by default |
+| GitHub Actions | `CRAWL_API_BASE_URL` | Same backend URL for hourly crawl |
+
+Full deploy steps: **[DEPLOY.md](DEPLOY.md)**.
+
+---
 
 ## Product scope (v1)
 
@@ -44,6 +83,7 @@ Deferred: international sources + translation model.
 
 | Method | Path | Description |
 |--------|------|-------------|
+| GET | `/` | `{"message":"hello"}` |
 | GET | `/api/health` | Health check |
 | GET | `/api/articles/hot` | Hot feed |
 | GET | `/api/articles/new` | New feed |
