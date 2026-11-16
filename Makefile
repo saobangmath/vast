@@ -11,7 +11,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 WEB_PORT ?= 3000
 
-.PHONY: help install install-backend install-frontend api web crawl crawl-loop crawl-status crawl-api docker-up docker-down health check clean
+.PHONY: help install install-backend install-frontend api web crawl-status crawl-api docker-up docker-down health check clean
 
 help:
 	@echo "VAST Tin nóng KHCN — make targets"
@@ -19,10 +19,8 @@ help:
 	@echo "  make install       Install backend venv + frontend npm deps"
 	@echo "  make api           Run FastAPI with reload on :$(API_PORT)"
 	@echo "  make web           Run Next.js dev server on :$(WEB_PORT)"
-	@echo "  make crawl         Run one crawler cycle (CLI)"
-	@echo "  make crawl-loop    Optional local crawler loop (default every 1 hour)"
-	@echo "  make crawl-status  Show crawl status via API"
 	@echo "  make crawl-api     Trigger one crawl via POST /api/crawl/run"
+	@echo "  make crawl-status  Show crawl status via API"
 	@echo "  make health        Hit /api/health"
 	@echo "  make check         Smoke-test hot/new/topics APIs"
 	@echo "  make docker-up     Start Postgres + API via docker compose"
@@ -32,7 +30,8 @@ help:
 	@echo "Typical local flow:"
 	@echo "  make install && make api    # terminal 1 — API"
 	@echo "  make web                    # terminal 2 — UI"
-	@echo "  (production crawl: GitHub Actions hourly → /api/crawl/run)"
+	@echo "  make crawl-api              # optional one-shot crawl (API must be up)"
+	@echo "  (production crawl: GitHub Actions every 15 min → /api/crawl/run)"
 
 install: install-backend install-frontend
 
@@ -48,12 +47,6 @@ api:
 
 web:
 	cd $(FRONTEND) && npm run dev -- --port $(WEB_PORT)
-
-crawl:
-	cd $(BACKEND) && $(PY) -m scripts.crawl
-
-crawl-loop:
-	cd $(BACKEND) && $(PY) -m scripts.crawl_loop
 
 crawl-status:
 	curl -s http://$(API_HOST):$(API_PORT)/api/crawl/status | python3 -m json.tool

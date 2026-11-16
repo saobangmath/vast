@@ -1,11 +1,11 @@
-# Automatic crawl every hour — wakes the Vercel API and runs one cycle.
+# Automatic crawl every 15 minutes — wakes the Vercel API and runs one cycle.
 # Required repo secret:
 #   CRAWL_API_BASE_URL = https://your-backend.vercel.app   (no trailing slash)
-name: Crawl hourly
+name: Crawl every 15 minutes
 
 on:
   schedule:
-    - cron: "0 * * * *" # every hour at minute 0 (UTC)
+    - cron: "*/15 * * * *" # every 15 minutes (UTC)
   workflow_dispatch: {}
 
 jobs:

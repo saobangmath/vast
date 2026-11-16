@@ -11,7 +11,7 @@ Hybrid portal inspired by [vast.gov.vn](https://vast.gov.vn/) with a Báo Mới�
 | **Frontend** | **Next.js 15** (App Router) + React 19 + TypeScript + Tailwind CSS 4 | `make web` → http://localhost:3000 |
 | **Backend** | **FastAPI** (Python) + Uvicorn + SQLAlchemy 2 | `make api` → http://localhost:8000 |
 | **Database** | **SQLite** | File: `backend/data/vast_news.db` (default `DATABASE_URL=sqlite:///./data/vast_news.db`) |
-| **Crawl** | Manual / optional loop | `make crawl` or `make crawl-loop` |
+| **Crawl** | Via API | `make crawl-api` → `POST /api/crawl/run` |
 
 ```text
 Browser → localhost:3000 (Next.js)
@@ -25,7 +25,7 @@ Browser → localhost:3000 (Next.js)
 make install
 make api    # terminal 1
 make web    # terminal 2
-# optional: make crawl   or   make crawl-loop
+# optional: make crawl-api
 ```
 
 Local env:
@@ -43,7 +43,7 @@ Local env:
 | **Backend** | **FastAPI** (Python) | Vercel project, Root Directory = `backend` |
 | **Database** | **Neon** (serverless Postgres) | `DATABASE_URL` on the backend Vercel project |
 | **Hosting** | **Vercel** (monorepo → 2 projects) | Auto-deploy on push/merge to `main` |
-| **Crawl** | **GitHub Actions** (hourly) | `POST /api/crawl/run` (secret `CRAWL_API_BASE_URL`) |
+| **Crawl** | **GitHub Actions** (every 15 min) | `POST /api/crawl/run` (secret `CRAWL_API_BASE_URL`) |
 
 ```text
 Browser → Vercel (Next.js FE)
@@ -52,7 +52,7 @@ Browser → Vercel (Next.js FE)
               ↓ DATABASE_URL
             Neon Postgres
 
-GitHub Actions (hourly) → POST /api/crawl/run → same Neon DB
+GitHub Actions (every 15 min) → POST /api/crawl/run → same Neon DB
 ```
 
 Prod env:
@@ -62,7 +62,7 @@ Prod env:
 | Frontend (Vercel) | `NEXT_PUBLIC_API_URL` | Backend URL, e.g. `https://<api>.vercel.app` |
 | Backend (Vercel) | `DATABASE_URL` | Neon Postgres connection string |
 | Backend (Vercel) | `CORS_ORIGINS` / `CORS_ORIGIN_REGEX` | Optional; regex allows `*.vercel.app` by default |
-| GitHub Actions | `CRAWL_API_BASE_URL` | Same backend URL for hourly crawl |
+| GitHub Actions | `CRAWL_API_BASE_URL` | Same backend URL for scheduled crawl |
 
 Full deploy steps: **[DEPLOY.md](DEPLOY.md)**.
 

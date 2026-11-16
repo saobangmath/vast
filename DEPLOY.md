@@ -9,11 +9,11 @@ merge/push to main (GitHub)
                 ↓
               Neon Postgres
 
-GitHub Actions (hourly, automatic)
+GitHub Actions (every 15 min, automatic)
         → POST /api/crawl/run on Vercel backend
 ```
 
-Deploy is automatic via Vercel Git. **Hourly crawl** is automatic via GitHub Actions (not Vercel Cron).
+Deploy is automatic via Vercel Git. **Crawl every 15 minutes** via GitHub Actions (not Vercel Cron).
 
 ### Chicken-and-egg URLs (`NEXT_PUBLIC_API_URL` ↔ `CORS_ORIGINS`)
 
@@ -58,17 +58,17 @@ Skip `CORS_ORIGINS` for now (regex covers `*.vercel.app`).
 5. Deploy → copy the URL (e.g. `https://vast-khcn-api.vercel.app`)
 6. Confirm: `/api/health`
 
-### Automatic crawl every 1 hour
+### Automatic crawl every 15 minutes
 
 Vercel Hobby Cron is only 1×/day, so we use **GitHub Actions** instead:
 
 1. Repo → **Settings → Secrets and variables → Actions**
 2. Add secret `CRAWL_API_BASE_URL` = your backend URL, e.g. `https://vast-khcn-api.vercel.app`
-3. [`.github/workflows/crawl.yml`](.github/workflows/crawl.yml) runs at minute 0 of every hour (UTC) and `POST`s `/api/crawl/run`
+3. [`.github/workflows/crawl.yml`](.github/workflows/crawl.yml) runs every 15 minutes (UTC) and `POST`s `/api/crawl/run`
 
-Manual test: **Actions → Crawl hourly → Run workflow**.
+Manual test: **Actions → Crawl every 15 minutes → Run workflow**.
 
-Optional local loop (same 1h default): `make crawl-loop`.
+Local one-shot (API must be running): `make crawl-api`.
 
 ### Optional: only rebuild backend when backend files change
 
@@ -129,7 +129,7 @@ If deploys do not start:
 make install && make api && make web
 ```
 
-Local: `make api` + `make web`. Production crawl = GitHub Actions hourly.
+Local: `make api` + `make web`. Production crawl = GitHub Actions every 15 min.
 
 ---
 
@@ -141,5 +141,5 @@ Local: `make api` + `make web`. Production crawl = GitHub Actions hourly.
 - [ ] Production Branch = `main` on both
 - [ ] `DATABASE_URL` (Neon) on Vercel backend
 - [ ] `NEXT_PUBLIC_API_URL` on frontend
-- [ ] Secret `CRAWL_API_BASE_URL` set (hourly auto-crawl)
+- [ ] Secret `CRAWL_API_BASE_URL` set (15‑min auto-crawl)
 - [ ] Push/merge to `main` creates two Production deployments

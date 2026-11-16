@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     )
     crawl_timeout_seconds: float = 20.0
     related_similarity_threshold: float = 0.35
-    # In-API asyncio scheduler (off by default — use `python -m scripts.crawl_loop`)
+    # In-API asyncio scheduler (off by default — prod uses GitHub Actions)
     crawl_scheduler_enabled: bool = False
-    crawl_interval_seconds: int = 3600  # 1 hour
+    crawl_interval_seconds: int = 900  # 15 minutes (used if scheduler enabled)
     crawl_on_startup: bool = True
 
     @property

@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -10,9 +11,16 @@ from app.crawler.scheduler import scheduler_status, start_scheduler, stop_schedu
 from app.database import SessionLocal, init_db
 from app.schemas import HealthOut
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    logger.info("API starting app=%s", get_settings().app_name)
     init_db()
     db = SessionLocal()
     try:
@@ -24,6 +32,7 @@ async def lifespan(_: FastAPI):
         yield
     finally:
         await stop_scheduler()
+        logger.info("API shutting down")
 
 
 settings = get_settings()
