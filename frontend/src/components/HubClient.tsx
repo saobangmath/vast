@@ -17,6 +17,14 @@ type Props = {
 export function HubClient({ hot, newer, topics, initialTab = "hot", initialTopic }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
   const [topic, setTopic] = useState<string | undefined>(initialTopic);
+  const [source, setSource] = useState("all");
+
+  // Outlets present in the loaded articles, alphabetical (Genk ICT, Thanh Niên, VietnamNet, VnExpress…).
+  const sources = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const a of [...hot, ...newer]) if (!seen.has(a.source.key)) seen.set(a.source.key, a.source.name);
+    return [...seen].map(([key, name]) => ({ key, name })).sort((a, b) => a.name.localeCompare(b.name, "vi"));
+  }, [hot, newer]);
 
   const availableTopics = useMemo(() => {
     const pool = [...hot, ...newer];
@@ -30,8 +38,8 @@ export function HubClient({ hot, newer, topics, initialTab = "hot", initialTopic
 
   const items = useMemo(() => {
     const base = tab === "hot" ? hot : newer;
-    return topic ? base.filter((a) => a.topic?.slug === topic) : base;
-  }, [hot, newer, tab, topic]);
+    return base.filter((a) => (!topic || a.topic?.slug === topic) && (source === "all" || a.source.key === source));
+  }, [hot, newer, tab, topic, source]);
 
   return (
     <div className="hub">
@@ -63,6 +71,23 @@ export function HubClient({ hot, newer, topics, initialTab = "hot", initialTopic
         )}
       </div>
 
+      {sources.length > 1 && (
+        <div className="chips filters hub-sources" role="tablist" aria-label="Lọc theo nguồn báo">
+          {[{ key: "all", name: "Tất cả" }, ...sources].map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              role="tab"
+              aria-selected={source === s.key}
+              className={`pill ${source === s.key ? "on" : ""}`}
+              onClick={() => setSource(s.key)}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {items.length > 0 ? (
         <div className="news-list">
           {items.map((article) => (
@@ -82,8 +107,8 @@ export function HubClient({ hot, newer, topics, initialTab = "hot", initialTopic
       )}
 
       <p className="note">
-        Mỗi bài hiển thị tóm tắt trên cổng VAST. Bấm &ldquo;Đọc tại nguồn&rdquo; để đọc đầy đủ trên trang của cơ quan
-        báo chí.
+        Tin được tổng hợp tự động từ các cơ quan báo chí. Bấm vào ảnh hoặc tiêu đề để đọc bài đầy đủ trên trang của
+        báo; nội dung thuộc quyền của từng cơ quan báo chí.
       </p>
     </div>
   );

@@ -12,4 +12,4 @@ backend/data/
 frontend/.vercel
 backend/.vercel
 .crawl-cache/
-crawl.log
+crawl*.log

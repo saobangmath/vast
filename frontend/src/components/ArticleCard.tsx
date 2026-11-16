@@ -1,28 +1,30 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import type { ArticleCard as ArticleCardType } from "@/lib/api";
 import { formatRelativeTime, sourceHue } from "@/lib/api";
 
 /** Aggregated press article: summary on the portal, original article one click away. */
 export function ArticleCard({ article }: { article: ArticleCardType }) {
-  const detail = `/tin-nong-khcn/${article.id}`;
+  const [broken, setBroken] = useState(false); // image URL failed to load -> show the placeholder
+  // Every link goes straight to the publisher's article (new tab), not to an internal summary page.
+  const source = { href: article.canonical_url, target: "_blank", rel: "noopener noreferrer" } as const;
   return (
     <article className="nrow nrow--press">
-      <Link href={detail} className="nrow-media" tabIndex={-1} aria-hidden>
-        {article.image_url ? (
+      <a {...source} className="nrow-media" tabIndex={-1} aria-hidden>
+        {article.image_url && !broken ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={article.image_url}
             alt=""
             loading="lazy"
             referrerPolicy="no-referrer"
-            onError={(e) => e.currentTarget.remove()}
+            onError={() => setBroken(true)}
           />
         ) : (
           <div className="nrow-ph" />
         )}
-      </Link>
+      </a>
       <div>
         <div className="press-meta">
           <span className="src-badge">
@@ -33,18 +35,14 @@ export function ArticleCard({ article }: { article: ArticleCardType }) {
           {article.related_count > 0 && <span className="related-pill">{article.related_count} bài liên quan</span>}
         </div>
         <h2>
-          <Link href={detail}>{article.title}</Link>
+          <a {...source}>{article.title}</a>
         </h2>
         {article.summary && <p>{article.summary}</p>}
-        <div className="press-actions">
-          {article.topic && <span className="pill pill--static">{article.topic.name}</span>}
-          <a className="ext-link" href={article.canonical_url} target="_blank" rel="noopener noreferrer">
-            Đọc tại nguồn
-            <svg viewBox="0 0 24 24" aria-hidden>
-              <path d="M7 17 17 7M8 7h9v9" />
-            </svg>
-          </a>
-        </div>
+        {article.topic && (
+          <div className="press-actions">
+            <span className="pill pill--static">{article.topic.name}</span>
+          </div>
+        )}
       </div>
     </article>
   );
