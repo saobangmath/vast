@@ -206,10 +206,7 @@ export function HomeVariants({ articles, today }: Props) {
       <Banner />
 
       <div className="wrap portal-main">
-        {variant === 3 && (
-          <PressSection articles={articles} layout="hot" className="press--hot" id="press-h-v3" />
-        )}
-
+        {/* Services use negative margin to sit on the banner edge — keep as first child. */}
         <Services />
 
         {variant === 1 && (
@@ -233,10 +230,13 @@ export function HomeVariants({ articles, today }: Props) {
         )}
 
         {variant === 3 && (
-          <div className="cols">
-            <ScienceCards />
-            <AsidePanels />
-          </div>
+          <>
+            <PressSection articles={articles} layout="hot" className="press--hot" id="press-h-v3" />
+            <div className="cols">
+              <ScienceCards />
+              <AsidePanels />
+            </div>
+          </>
         )}
 
         <PartnerLinks />
