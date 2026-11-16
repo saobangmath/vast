@@ -1,12 +1,24 @@
-# Automatic crawl every 5 minutes — wakes the Vercel API and runs one cycle.
+# Automatic crawl ~every 5 minutes — wakes the Vercel API and runs one cycle.
+#
+# IMPORTANT (GitHub limitation):
+# - `schedule` is NOT exact. Jobs are often delayed or dropped under load.
+# - `workflow_dispatch` (manual) can succeed while `schedule` looks idle.
+# - High load is worst near minute 0 of each hour — we offset minutes below.
+# - Docs: https://docs.github.com/en/actions/how-tos/troubleshoot-workflows
+#
 # Required repo Actions variable (plain, not secret):
 #   CRAWL_API_BASE_URL = https://your-backend.vercel.app   (no trailing slash)
 name: Crawl every 5 minutes
 
 on:
   schedule:
-    - cron: "*/5 * * * *" # every 5 minutes (UTC)
+    # ~every 5 min, offset from :00/:05/... to reduce drop risk
+    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
   workflow_dispatch: {}
+
+concurrency:
+  group: crawl-scheduled
+  cancel-in-progress: false
 
 jobs:
   crawl:
@@ -15,8 +27,10 @@ jobs:
       - name: Trigger API crawl
         env:
           CRAWL_API_BASE_URL: ${{ vars.CRAWL_API_BASE_URL }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
+          echo "Triggered by: ${EVENT_NAME}"
           if [ -z "${CRAWL_API_BASE_URL:-}" ]; then
             echo "Missing variable CRAWL_API_BASE_URL"
             echo "GitHub → Settings → Secrets and variables → Actions → Variables → New repository variable"
