@@ -9,10 +9,9 @@ const NAV: NavItem[] = [
     label: "Trang chủ",
     href: "/",
     children: [
-      { label: "Trang Chủ 1 — báo chí cuối trang", href: "/" },
-      { label: "Trang Chủ 2 — báo chí cột phải", href: "/?v=2" },
-      { label: "Trang Chủ 3 — báo chí đầu trang", href: "/?v=3" },
-      { label: "Trang Chủ 4 — tin của Viện + cột báo chí", href: "/?v=4" },
+      { label: "Trang Chủ 1 — tin của Viện + cột báo chí", href: "/" },
+      { label: "Trang Chủ 2 — báo chí đầu trang", href: "/?v=2" },
+      { label: "Trang Chủ 3 — như Trang Chủ 2, không banner", href: "/?v=3" },
     ],
   },
   {
@@ -90,24 +89,6 @@ export function SiteHeader() {
       <a className="skip" href="#main">
         Bỏ qua, đến nội dung chính
       </a>
-      <div className="topbar">
-        <div className="wrap">
-          <span>Cổng thông tin điện tử chính thức</span>
-          <div className="links">
-            <Link href="/lien-he">Liên hệ</Link>
-            <a href={VAST} target="_blank" rel="noopener noreferrer">
-              vast.gov.vn
-            </a>
-            <div className="lang" aria-label="Ngôn ngữ">
-              <a className="on" href="#">
-                VI
-              </a>
-              <a href="#">EN</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <header className="masthead-bar">
         <div className="wrap masthead">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -118,6 +99,18 @@ export function SiteHeader() {
               <h1 className="site-title">Viện Hàn lâm Khoa học và Công nghệ Việt Nam</h1>
             </Link>
             <span className="en">Vietnam Academy of Science and Technology</span>
+          </div>
+          <div className="masthead-tools">
+            <Link href="/lien-he">Liên hệ</Link>
+            <a href={VAST} target="_blank" rel="noopener noreferrer">
+              vast.gov.vn
+            </a>
+            <div className="lang" aria-label="Ngôn ngữ">
+              <a className="on" href="#">
+                VI
+              </a>
+              <a href="#">EN</a>
+            </div>
           </div>
         </div>
       </header>

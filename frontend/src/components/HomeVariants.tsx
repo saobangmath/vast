@@ -12,10 +12,9 @@ import { PARTNER_LINKS } from "@/lib/vast-content";
 const VAST = "https://vast.gov.vn/";
 
 const TABS = [
-  { id: 1, label: "Trang Chủ 1", hint: "Báo chí ở cuối trang" },
-  { id: 2, label: "Trang Chủ 2", hint: "Báo chí cột phải" },
-  { id: 3, label: "Trang Chủ 3", hint: "Báo chí đầu trang (kiểu Báo Mới)" },
-  { id: 4, label: "Trang Chủ 4", hint: "Tin của Viện + cột báo chí mới nhất (bản mới)" },
+  { id: 1, label: "Trang Chủ 1", hint: "Tin của Viện + cột báo chí mới nhất" },
+  { id: 2, label: "Trang Chủ 2", hint: "Báo chí đầu trang (kiểu Báo Mới)" },
+  { id: 3, label: "Trang Chủ 3", hint: "Như Trang Chủ 2 nhưng không có banner đầu trang" },
 ] as const;
 
 /** Official VAST content for the homepage, computed on the server from the crawled data. */
@@ -179,7 +178,7 @@ export function HomeVariants({ articles, today, home }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const raw = Number(params.get("v") ?? "1");
-  const variant = raw === 2 || raw === 3 || raw === 4 ? raw : 1;
+  const variant = raw === 2 || raw === 3 ? raw : 1;
 
   function setVariant(id: number) {
     const next = new URLSearchParams(params.toString());
@@ -219,41 +218,10 @@ export function HomeVariants({ articles, today, home }: Props) {
         </div>
       </div>
 
-      <Banner featured={home.featured} />
+      {variant !== 3 && <Banner featured={home.featured} />}
 
-      <div className="wrap portal-main">
-        {variant === 3 && (
-          <PressSection articles={articles} layout="hot" className="press--hot" id="press-h-v3" />
-        )}
-
+      <div className={variant === 3 ? "wrap portal-main portal-main--nobanner" : "wrap portal-main"}>
         {variant === 1 && (
-          <>
-            <div className="cols">
-              <ScienceCards items={home.science} />
-              <AsidePanels activity={home.activity} />
-            </div>
-            <PressSection articles={articles} layout="grid" />
-          </>
-        )}
-
-        {variant === 2 && (
-          <div className="cols cols--press-right">
-            <div className="stack">
-              <ScienceCards items={home.science} />
-              <AsidePanels activity={home.activity} />
-            </div>
-            <PressSection articles={articles} layout="rail" className="press--rail" id="press-h-v2" />
-          </div>
-        )}
-
-        {variant === 3 && (
-          <div className="cols">
-            <ScienceCards items={home.science} />
-            <AsidePanels activity={home.activity} />
-          </div>
-        )}
-
-        {variant === 4 && (
           <>
             <div className="sci-layout">
               <SciNews official={home.science} />
@@ -261,6 +229,16 @@ export function HomeVariants({ articles, today, home }: Props) {
             </div>
             <div className="info-row">
               <InfoPanels />
+            </div>
+          </>
+        )}
+
+        {variant !== 1 && (
+          <>
+            <PressSection articles={articles} layout="hot" className="press--hot" id="press-h-v3" />
+            <div className="cols">
+              <ScienceCards items={home.science} />
+              <AsidePanels activity={home.activity} />
             </div>
           </>
         )}
