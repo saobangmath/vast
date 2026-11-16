@@ -1,11 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import { PressFeed } from "@/components/PressFeed";
 import { fetchNew } from "@/lib/api";
+import { formatDate, getIndex, sectionName } from "@/lib/content";
 import {
-  ACTIVITY_NEWS,
-  FEATURED,
   PARTNER_LINKS,
-  SCIENCE_CARDS,
   SERVICES,
 } from "@/lib/vast-content";
 
@@ -22,6 +21,11 @@ async function loadPress() {
 
 export default async function HomePage() {
   const articles = await loadPress();
+  const news = getIndex().items;
+  const activity = news.filter((n) => n.section === "hoat-dong");
+  const featured = activity.find((n) => n.image) ?? news[0];
+  const activityList = activity.filter((n) => n.id !== featured?.id).slice(0, 4);
+  const science = news.filter((n) => n.section.startsWith("khcn") || n.section.includes("nghien-cuu") || n.section === "phat-trien-cong-nghe").slice(0, 4);
   const today = new Intl.DateTimeFormat("vi-VN", { dateStyle: "full", timeZone: "Asia/Ho_Chi_Minh" }).format(
     new Date(),
   );
@@ -56,17 +60,17 @@ export default async function HomePage() {
               </a>
             </div>
           </div>
-          <article className="banner-card">
-            <span className="tag">{FEATURED.tag}</span>
-            <h3>{FEATURED.title}</h3>
-            <p>{FEATURED.summary}</p>
-            <a href={FEATURED.href} target="_blank" rel="noopener noreferrer">
-              Đọc chi tiết →
-            </a>
-            <div className="meta">
-              {FEATURED.date} · {FEATURED.section}
-            </div>
-          </article>
+          {featured && (
+            <article className="banner-card">
+              <span className="tag">Tin nổi bật</span>
+              <h3>{featured.title}</h3>
+              <p>{featured.summary}</p>
+              <Link href={`/bai-viet/${featured.id}`}>Đọc chi tiết →</Link>
+              <div className="meta">
+                {formatDate(featured.date)} · {sectionName(featured.section)}
+              </div>
+            </article>
+          )}
         </div>
       </section>
 
@@ -90,22 +94,22 @@ export default async function HomePage() {
           <section>
             <div className="sec-head">
               <h2 className="sec-h">Tin khoa học - Công nghệ</h2>
-              <a href={VAST} target="_blank" rel="noopener noreferrer">
-                Xem tất cả →
-              </a>
+              <Link href="/tin-tuc/khcn-trong-nuoc">Xem tất cả →</Link>
             </div>
             <div className="cards">
-              {SCIENCE_CARDS.map((c) => (
-                <article key={c.title} className="card">
-                  <div className="thumb" style={{ "--c1": c.c1, "--c2": c.c2 } as React.CSSProperties} />
+              {science.map((c) => (
+                <article key={c.id} className="card">
+                  {c.image ? (
+                    <Image className="card-img" src={c.image} alt="" width={640} height={320} sizes="(max-width: 640px) 100vw, 380px" />
+                  ) : (
+                    <div className="thumb" style={{ "--c1": "#123e6b", "--c2": "#0a2340" } as React.CSSProperties} />
+                  )}
                   <div className="card-in">
-                    <span className="cat">{c.cat}</span>
+                    <span className="cat">{sectionName(c.section)}</span>
                     <h4>
-                      <a href={VAST} target="_blank" rel="noopener noreferrer">
-                        {c.title}
-                      </a>
+                      <Link href={`/bai-viet/${c.id}`}>{c.title}</Link>
                     </h4>
-                    <span className="meta">{c.meta}</span>
+                    <span className="meta">{formatDate(c.date)}</span>
                   </div>
                 </article>
               ))}
@@ -119,13 +123,11 @@ export default async function HomePage() {
               <p style={{ margin: "4px 0 0" }}>Xã Măng Bút, tỉnh Quảng Ngãi · 26/10/2026</p>
             </div>
             <div className="panel">
-              <h3>Tin tức hoạt động</h3>
+              <h3><Link href="/tin-tuc/hoat-dong">Tin tức hoạt động</Link></h3>
               <ul className="list">
-                {ACTIVITY_NEWS.map((t) => (
-                  <li key={t}>
-                    <a href={VAST} target="_blank" rel="noopener noreferrer">
-                      {t}
-                    </a>
+                {activityList.map((n) => (
+                  <li key={n.id}>
+                    <Link href={`/bai-viet/${n.id}`}>{n.title}</Link>
                   </li>
                 ))}
               </ul>

@@ -19,27 +19,38 @@ const NAV: NavItem[] = [
   },
   {
     label: "Tin tức - Sự kiện",
-    href: "/tin-nong-khcn",
+    href: "/tin-tuc",
     children: [
-      { label: "Tin tức hoạt động của Viện Hàn lâm", href: VAST },
+      { label: "Tin tức hoạt động của Viện Hàn lâm", href: "/tin-tuc/hoat-dong" },
+      { label: "Tin KH&CN trong nước", href: "/tin-tuc/khcn-trong-nuoc" },
+      { label: "Nghiên cứu cơ bản", href: "/tin-tuc/nghien-cuu-co-ban" },
+      { label: "Nghiên cứu và Phát triển công nghệ", href: "/tin-tuc/phat-trien-cong-nghe" },
+      { label: "Điều tra cơ bản", href: "/tin-tuc/dieu-tra-co-ban" },
+      { label: "Tin KH&CN quốc tế", href: "/tin-tuc/khcn-quoc-te" },
       { label: "Tin nóng KHCN (tổng hợp từ báo chí)", href: "/tin-nong-khcn" },
-      { label: "Tin mới cập nhật", href: "/tin-nong-khcn?tab=new" },
     ],
   },
   { label: "Chương trình KHCN trọng điểm", href: VAST },
   {
     label: "Giải thưởng Trần Đại Nghĩa",
-    href: VAST,
+    href: "/giai-thuong",
     children: [
-      { label: "Tin tức Giải thưởng", href: VAST },
-      { label: "Tiểu sử GS.VS. Trần Đại Nghĩa", href: VAST },
-      { label: "Văn bản - Thủ tục hồ sơ", href: VAST },
-      { label: "Thông báo", href: VAST },
-      { label: "Dữ liệu Giải thưởng", href: VAST },
+      { label: "Tin tức Giải thưởng", href: "/giai-thuong/giai-thuong-tin-tuc" },
+      { label: "Tiểu sử GS.VS. Trần Đại Nghĩa", href: "/giai-thuong/giai-thuong-tieu-su" },
+      { label: "Văn bản - Thủ tục hồ sơ", href: "/giai-thuong/giai-thuong-van-ban" },
+      { label: "Thông báo", href: "/giai-thuong/giai-thuong-thong-bao" },
+      { label: "Dữ liệu Giải thưởng", href: "/giai-thuong/giai-thuong-du-lieu" },
     ],
   },
   { label: "KHCN, ĐMST và CĐS", href: VAST },
-  { label: "Hoạt động đào tạo", href: VAST },
+  {
+    label: "Hoạt động đào tạo",
+    href: "/hoat-dong-dao-tao",
+    children: [
+      { label: "Thông tin đào tạo", href: "/hoat-dong-dao-tao/dao-tao" },
+      { label: "Thông tin tuyển sinh", href: "/hoat-dong-dao-tao/tuyen-sinh" },
+    ],
+  },
 ];
 
 function NavLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
