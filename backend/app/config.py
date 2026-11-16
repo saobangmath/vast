@@ -9,7 +9,11 @@ class Settings(BaseSettings):
 
     app_name: str = "VAST Tin nóng KHCN"
     database_url: str = "sqlite:///./data/vast_news.db"
+    # Comma-separated exact origins. Optional on first deploy — see cors_origin_regex.
     cors_origins: str = "http://localhost:3000"
+    # Allows unknown Vercel frontend URLs before you know the exact hostname.
+    # Set empty string to disable. Example: https://.*\.vercel\.app
+    cors_origin_regex: str = r"https://.*\.vercel\.app"
     crawl_user_agent: str = (
         "VAST-NewsHubDemo/1.0 (+https://vast.gov.vn; research-demo; contact=demo@local)"
     )

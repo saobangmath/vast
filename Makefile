@@ -27,7 +27,7 @@ help:
 	@echo "  make check         Smoke-test hot/new/topics APIs"
 	@echo "  make docker-up     Start Postgres + API via docker compose"
 	@echo "  make docker-down   Stop docker compose stack"
-	@echo "  make clean         Remove caches / build artifacts"
+	@echo "  make clea pn         Remove caches / build artifacts"
 	@echo ""
 	@echo "Typical local flow:"
 	@echo "  make install && make api    # terminal 1 (includes periodic crawl)"

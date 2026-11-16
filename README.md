@@ -26,6 +26,8 @@ See **[DEPLOY.md](DEPLOY.md)**:
 - **Frontend** → Vercel project, Root Directory `frontend`
 - **Backend** → Vercel project, Root Directory `backend` (+ Cron `/api/crawl/run`)
 - **Postgres** → Neon (`DATABASE_URL` on the backend project)
+- **CI/CD** → connect the GitHub repo in Vercel; every merge/push to `main` auto-deploys both projects
+  (GitHub Actions in `.github/workflows/ci.yml` only runs lint/import checks)
 
 ## Product scope (v1)
 

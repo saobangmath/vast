@@ -1,70 +1,113 @@
-# Deploy to Vercel (frontend + backend) + Neon Postgres
+# Deploy: Vercel (frontend + backend) + Neon + auto-deploy on `main`
 
 ```text
-Browser → Vercel project: frontend (Next.js)
-                ↓ NEXT_PUBLIC_API_URL
-         Vercel project: backend (FastAPI serverless)
-                ↓ DATABASE_URL
-              Neon (Postgres)
-         Vercel Cron → GET /api/crawl/run every 5 min
+merge/push to main (GitHub)
+        ↓
+   Vercel Git integration
+        ├─ project: frontend  (Root = frontend/)
+        └─ project: backend   (Root = backend/)
+                ↓
+              Neon Postgres
 ```
 
-> In-process 5‑minute scheduler is **disabled on Vercel** (serverless). Use **Vercel Cron** (or cron-job.org) instead.
+No GitHub Actions required for deploy — Vercel deploys automatically when `main` updates.
 
----
+### Chicken-and-egg URLs (`NEXT_PUBLIC_API_URL` ↔ `CORS_ORIGINS`)
 
-## 0) GitHub
+You do **not** need both URLs on day one. Use this order:
 
-```bash
-# already prepared in repo — push if needed
-git push -u origin main
-```
+1. **Deploy backend first** with only `DATABASE_URL`  
+   - CORS already allows `https://*.vercel.app` via `CORS_ORIGIN_REGEX` (built-in default)  
+   - Exact `CORS_ORIGINS` can wait
+2. Copy backend URL → **deploy frontend** with `NEXT_PUBLIC_API_URL=<backend-url>`
+3. (Optional later) set `CORS_ORIGINS` to the exact frontend URL for tighter lockdown
+
+Note: most listing pages fetch on the **Next.js server**, so CORS often does not matter for the first demo. `NEXT_PUBLIC_API_URL` is the one you must set after the backend URL exists.
 
 ---
 
 ## 1) Neon
 
 1. Create a Neon project
-2. Copy the Postgres connection string (with `sslmode=require`)
-3. You will paste it into the **backend** Vercel project as `DATABASE_URL` (never commit it)
+2. Copy the Postgres URL (`sslmode=require`)
+3. Use it only as a Vercel **backend** env var `DATABASE_URL` (never commit it)
 
 ---
 
-## 2) Vercel — Backend (FastAPI)
+## 2) Vercel — Backend first (auto-deploy)
 
-1. [vercel.com/new](https://vercel.com/new) → import this GitHub repo
-2. Project name e.g. `vast-khcn-api`
-3. **Root Directory** → `backend`
-4. Framework: FastAPI / Python (auto)
-5. Environment variables:
+1. Open [vercel.com/new](https://vercel.com/new)
+2. **Import** your GitHub repo
+3. Configure:
+   - **Project Name:** e.g. `vast-khcn-api`
+   - **Root Directory:** `backend` (Edit → select folder)
+   - **Framework Preset:** FastAPI / Other (auto-detect is fine)
+   - **Production Branch:** `main`
+4. **Environment Variables** (first deploy):
 
 | Name | Value |
 |------|--------|
 | `DATABASE_URL` | Neon connection string |
-| `CORS_ORIGINS` | `https://<your-frontend>.vercel.app` (update after step 3) |
-| `CRAWL_ON_STARTUP` | `false` (optional; cron will crawl) |
+| `CRAWL_ON_STARTUP` | `false` |
 
-6. Deploy → copy URL, e.g. `https://vast-khcn-api.vercel.app`
-7. Smoke test: `/api/health`, `/api/articles/hot`
+Skip `CORS_ORIGINS` for now (regex covers `*.vercel.app`).
 
-Cron: [`backend/vercel.json`](backend/vercel.json) schedules `GET /api/crawl/run` every 5 minutes.  
-**Hobby** plans may limit cron frequency (sometimes daily only) — if so, use [cron-job.org](https://cron-job.org) to hit that URL every 5 minutes, or upgrade to Pro.
+5. Deploy → copy the URL (e.g. `https://vast-khcn-api.vercel.app`)
+6. Confirm: `/api/health`
+
+Cron: `backend/vercel.json` calls `GET /api/crawl/run` every 5 minutes.  
+Hobby may limit cron frequency — use [cron-job.org](https://cron-job.org) if needed.
+
+### Optional: only rebuild backend when backend files change
+
+**Project Settings → Git → Ignored Build Step:**
+
+```bash
+git diff --quiet HEAD^ HEAD -- ./backend
+```
+
+(Exit `0` = skip build; exit `1` = build.)
 
 ---
 
-## 3) Vercel — Frontend (Next.js)
+## 3) Vercel — Frontend second (auto-deploy)
 
-1. **Add New Project** → same GitHub repo again
-2. Project name e.g. `vast-khcn-web`
-3. **Root Directory** → `frontend`
-4. Environment variables:
+1. **Add New Project** → import the **same** GitHub repo again
+2. Configure:
+   - **Project Name:** e.g. `vast-khcn-web`
+   - **Root Directory:** `frontend`
+   - **Framework Preset:** Next.js
+   - **Production Branch:** `main`
+3. **Environment Variables** (now you know the backend URL):
 
 | Name | Value |
 |------|--------|
 | `NEXT_PUBLIC_API_URL` | `https://vast-khcn-api.vercel.app` (no trailing slash) |
 
-5. Deploy
-6. Go back to **backend** project → set `CORS_ORIGINS` to the frontend URL → Redeploy backend
+4. Deploy → open the site
+5. Optional harden: backend → set `CORS_ORIGINS=https://vast-khcn-web.vercel.app` → Redeploy
+
+### Optional: only rebuild frontend when frontend files change
+
+**Ignored Build Step:**
+
+```bash
+git diff --quiet HEAD^ HEAD -- ./frontend
+```
+
+---
+
+## 4) Verify CI/CD
+
+1. Merge a PR into `main` (or push to `main`)
+2. In each Vercel project → **Deployments**: a new Production deployment should start
+3. GitHub commit should show a Vercel status check (after the GitHub integration is authorized)
+
+If deploys do not start:
+
+- Vercel project → **Settings → Git**: repo connected, Production Branch = `main`
+- GitHub → repo **Settings → Integrations / Applications**: Vercel has access
+- You used **Root Directory** correctly (`frontend` / `backend`)
 
 ---
 
@@ -74,16 +117,17 @@ Cron: [`backend/vercel.json`](backend/vercel.json) schedules `GET /api/crawl/run
 make install && make api && make web
 ```
 
-Local still uses in-process scheduler every 5 minutes (not Vercel).
+Local API still uses the in-process 5‑minute scheduler. On Vercel that scheduler is off; Cron hits `/api/crawl/run` instead.
 
 ---
 
 ## Checklist
 
-- [ ] Repo on GitHub
-- [ ] Neon `DATABASE_URL` on backend Vercel project
+- [ ] GitHub repo connected to Vercel (twice: FE + API)
 - [ ] Backend Root Directory = `backend`
 - [ ] Frontend Root Directory = `frontend`
-- [ ] `NEXT_PUBLIC_API_URL` → backend URL
-- [ ] `CORS_ORIGINS` → frontend URL
-- [ ] Cron or external ping hitting `/api/crawl/run`
+- [ ] Production Branch = `main` on both
+- [ ] `DATABASE_URL` on backend
+- [ ] `NEXT_PUBLIC_API_URL` on frontend
+- [ ] `CORS_ORIGINS` = frontend URL on backend
+- [ ] Push/merge to `main` creates two Production deployments
