@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     related_similarity_threshold: float = 0.35
     # In-API asyncio scheduler (off by default — prod uses GitHub Actions)
     crawl_scheduler_enabled: bool = False
-    crawl_interval_seconds: int = 900  # 15 minutes (used if scheduler enabled)
+    crawl_interval_seconds: int = 300  # 5 minutes (used if scheduler enabled)
     crawl_on_startup: bool = True
 
     @property

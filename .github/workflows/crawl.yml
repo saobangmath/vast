@@ -1,11 +1,11 @@
-# Automatic crawl every 15 minutes — wakes the Vercel API and runs one cycle.
-# Required repo secret:
+# Automatic crawl every 5 minutes — wakes the Vercel API and runs one cycle.
+# Required repo Actions variable (plain, not secret):
 #   CRAWL_API_BASE_URL = https://your-backend.vercel.app   (no trailing slash)
-name: Crawl every 15 minutes
+name: Crawl every 5 minutes
 
 on:
   schedule:
-    - cron: "*/15 * * * *" # every 15 minutes (UTC)
+    - cron: "*/5 * * * *" # every 5 minutes (UTC)
   workflow_dispatch: {}
 
 jobs:
@@ -14,12 +14,12 @@ jobs:
     steps:
       - name: Trigger API crawl
         env:
-          CRAWL_API_BASE_URL: ${{ secrets.CRAWL_API_BASE_URL }}
+          CRAWL_API_BASE_URL: ${{ vars.CRAWL_API_BASE_URL }}
         run: |
           set -euo pipefail
           if [ -z "${CRAWL_API_BASE_URL:-}" ]; then
-            echo "Missing secret CRAWL_API_BASE_URL"
-            echo "GitHub → Settings → Secrets and variables → Actions → New secret"
+            echo "Missing variable CRAWL_API_BASE_URL"
+            echo "GitHub → Settings → Secrets and variables → Actions → Variables → New repository variable"
             exit 1
           fi
           url="${CRAWL_API_BASE_URL%/}/api/crawl/run"

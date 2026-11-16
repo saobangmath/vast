@@ -31,7 +31,7 @@ help:
 	@echo "  make install && make api    # terminal 1 — API"
 	@echo "  make web                    # terminal 2 — UI"
 	@echo "  make crawl-api              # optional one-shot crawl (API must be up)"
-	@echo "  (production crawl: GitHub Actions every 15 min → /api/crawl/run)"
+	@echo "  (production crawl: GitHub Actions every 5 min → /api/crawl/run)"
 
 install: install-backend install-frontend
 

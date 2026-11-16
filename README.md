@@ -43,7 +43,7 @@ Local env:
 | **Backend** | **FastAPI** (Python) | Vercel project, Root Directory = `backend` |
 | **Database** | **Neon** (serverless Postgres) | `DATABASE_URL` on the backend Vercel project |
 | **Hosting** | **Vercel** (monorepo → 2 projects) | Auto-deploy on push/merge to `main` |
-| **Crawl** | **GitHub Actions** (every 15 min) | `POST /api/crawl/run` (secret `CRAWL_API_BASE_URL`) |
+| **Crawl** | **GitHub Actions** (every 5 min) | `POST /api/crawl/run` (variable `CRAWL_API_BASE_URL`) |
 
 ```text
 Browser → Vercel (Next.js FE)
@@ -52,7 +52,7 @@ Browser → Vercel (Next.js FE)
               ↓ DATABASE_URL
             Neon Postgres
 
-GitHub Actions (every 15 min) → POST /api/crawl/run → same Neon DB
+GitHub Actions (every 5 min) → POST /api/crawl/run → same Neon DB
 ```
 
 Prod env:
@@ -62,7 +62,7 @@ Prod env:
 | Frontend (Vercel) | `NEXT_PUBLIC_API_URL` | Backend URL, e.g. `https://<api>.vercel.app` |
 | Backend (Vercel) | `DATABASE_URL` | Neon Postgres connection string |
 | Backend (Vercel) | `CORS_ORIGINS` / `CORS_ORIGIN_REGEX` | Optional; regex allows `*.vercel.app` by default |
-| GitHub Actions | `CRAWL_API_BASE_URL` | Same backend URL for scheduled crawl |
+| GitHub Actions | `CRAWL_API_BASE_URL` (Actions **variable**) | Backend URL for scheduled crawl |
 
 Full deploy steps: **[DEPLOY.md](DEPLOY.md)**.
 
