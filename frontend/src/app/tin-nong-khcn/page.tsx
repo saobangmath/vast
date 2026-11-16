@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
 import { HubClient } from "@/components/HubClient";
+import { PageHero } from "@/components/PageHero";
 import { fetchHot, fetchNew, fetchTopics } from "@/lib/api";
+
+export const metadata: Metadata = { title: "Tin nóng KHCN | VAST" };
 
 type SearchParams = Promise<{ tab?: string; topic?: string }>;
 
@@ -19,22 +23,15 @@ export default async function TinNongPage({ searchParams }: { searchParams: Sear
 
   return (
     <>
-      <div className="hub-hero">
-        <h1>Tin nóng KHCN</h1>
-        <p>
-          Tổng hợp tin khoa học — công nghệ từ báo chí và nguồn bên ngoài. Đọc tóm tắt tại đây, đọc đầy
-          đủ tại nguồn gốc.
-        </p>
+      <PageHero
+        eyebrow="Tổng hợp từ báo chí"
+        title="Tin nóng KHCN"
+        subtitle="Tin khoa học - công nghệ từ báo chí và các nguồn bên ngoài. Đọc tóm tắt tại đây, đọc đầy đủ tại nguồn gốc."
+        crumbs={[{ label: "Tin tức - Sự kiện", href: "/tin-tuc" }, { label: "Tin nóng KHCN" }]}
+      />
+      <div className="wrap portal-main page-body">
+        <HubClient hot={hot} newer={newer} topics={topics} initialTab={initialTab} initialTopic={params.topic} />
       </div>
-      <section className="section">
-        <HubClient
-          hot={hot}
-          newer={newer}
-          topics={topics}
-          initialTab={initialTab}
-          initialTopic={params.topic}
-        />
-      </section>
     </>
   );
 }

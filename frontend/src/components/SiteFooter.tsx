@@ -15,6 +15,12 @@ export function SiteFooter() {
               <Link href="/">Trang chủ</Link>
             </li>
             <li>
+              <Link href="/co-cau-to-chuc">Cơ cấu tổ chức</Link>
+            </li>
+            <li>
+              <Link href="/tin-tuc">Tin tức - Sự kiện</Link>
+            </li>
+            <li>
               <Link href="/tin-nong-khcn">Tin nóng KHCN</Link>
             </li>
             <li>
@@ -28,9 +34,7 @@ export function SiteFooter() {
           <h5>Hỗ trợ</h5>
           <ul>
             <li>
-              <a href="https://vast.gov.vn/" target="_blank" rel="noopener noreferrer">
-                Liên hệ
-              </a>
+              <Link href="/lien-he">Liên hệ</Link>
             </li>
           </ul>
         </div>

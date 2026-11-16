@@ -73,7 +73,7 @@ export function PressFeed({ articles, layout = "grid" }: Props) {
             <a className="hot-lead" href={lead.canonical_url} target="_blank" rel="noopener noreferrer">
               {lead.image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={lead.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                <img src={lead.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" onError={(e) => e.currentTarget.remove()} />
               )}
               <div className="hot-lead-body">
                 <span className="src">
@@ -120,7 +120,7 @@ export function PressFeed({ articles, layout = "grid" }: Props) {
             <a key={a.id} className="nitem nitem--rail" href={a.canonical_url} target="_blank" rel="noopener noreferrer">
               {a.image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                <img src={a.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" onError={(e) => e.currentTarget.remove()} />
               )}
               <div>
                 <span className="src">
@@ -148,7 +148,7 @@ export function PressFeed({ articles, layout = "grid" }: Props) {
           <a key={a.id} className="nitem" href={a.canonical_url} target="_blank" rel="noopener noreferrer">
             {a.image_url && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={a.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />
+              <img src={a.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" onError={(e) => e.currentTarget.remove()} />
             )}
             <div>
               <span className="src">

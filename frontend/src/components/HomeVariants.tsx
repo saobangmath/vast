@@ -1,28 +1,34 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ArticleCard } from "@/lib/api";
 import { PressSection } from "@/components/PressSection";
-import {
-  ACTIVITY_NEWS,
-  FEATURED,
-  PARTNER_LINKS,
-  SCIENCE_CARDS,
-  SERVICES,
-} from "@/lib/vast-content";
+import { PressSidebar } from "@/components/PressSidebar";
+import { SciNews, type OfficialNews } from "@/components/SciNews";
+import { PARTNER_LINKS } from "@/lib/vast-content";
 
 const VAST = "https://vast.gov.vn/";
 
 const TABS = [
-  { id: 1, label: "Trang Chủ 1", hint: "Báo chí ở cuối trang (hiện tại)" },
-  { id: 2, label: "Trang Chủ 2", hint: "Báo chí cột phải" },
-  { id: 3, label: "Trang Chủ 3", hint: "Báo chí đầu trang (kiểu Báo Mới)" },
+  { id: 1, label: "Trang Chủ 1", hint: "Tin của Viện + cột báo chí mới nhất" },
+  { id: 2, label: "Trang Chủ 2", hint: "Báo chí đầu trang (kiểu Báo Mới)" },
+  { id: 3, label: "Trang Chủ 3", hint: "Như Trang Chủ 2 nhưng không có banner đầu trang" },
 ] as const;
 
-type Props = { articles: ArticleCard[]; today: string };
+/** Official VAST content for the homepage, computed on the server from the crawled data. */
+export type HomeData = {
+  featured: { id: string; title: string; summary: string; dateLabel: string; sectionLabel: string } | null;
+  /** Latest science & technology articles of the Academy (with images). */
+  science: OfficialNews[];
+  /** Latest activity headlines. */
+  activity: { id: string; title: string }[];
+};
 
-function Banner() {
+type Props = { articles: ArticleCard[]; today: string; home: HomeData };
+
+function Banner({ featured }: { featured: HomeData["featured"] }) {
   return (
     <section className="banner" aria-label="Giới thiệu">
       <div className="wrap banner-grid">
@@ -42,61 +48,43 @@ function Banner() {
             </a>
           </div>
         </div>
-        <article className="banner-card">
-          <span className="tag">{FEATURED.tag}</span>
-          <h3>{FEATURED.title}</h3>
-          <p>{FEATURED.summary}</p>
-          <a href={FEATURED.href} target="_blank" rel="noopener noreferrer">
-            Đọc chi tiết →
-          </a>
-          <div className="meta">
-            {FEATURED.date} · {FEATURED.section}
-          </div>
-        </article>
+        {featured && (
+          <article className="banner-card">
+            <span className="tag">Tin nổi bật</span>
+            <h3>{featured.title}</h3>
+            <p>{featured.summary}</p>
+            <Link href={`/bai-viet/${featured.id}`}>Đọc chi tiết →</Link>
+            <div className="meta">
+              {featured.dateLabel} · {featured.sectionLabel}
+            </div>
+          </article>
+        )}
       </div>
     </section>
   );
 }
 
-function Services() {
-  return (
-    <section className="services" aria-label="Hệ thống nội bộ">
-      {SERVICES.map((s) => (
-        <a key={s.code} className="svc" href={VAST} target="_blank" rel="noopener noreferrer">
-          <div className="ico">
-            <svg viewBox="0 0 24 24" aria-hidden>
-              <path d={s.icon} />
-            </svg>
-          </div>
-          <b>{s.name}</b>
-          <span>{s.code}</span>
-        </a>
-      ))}
-    </section>
-  );
-}
-
-function ScienceCards() {
+function ScienceCards({ items }: { items: OfficialNews[] }) {
   return (
     <section>
       <div className="sec-head">
         <h2 className="sec-h">Tin khoa học - Công nghệ</h2>
-        <a href={VAST} target="_blank" rel="noopener noreferrer">
-          Xem tất cả →
-        </a>
+        <Link href="/tin-tuc/khcn-trong-nuoc">Xem tất cả →</Link>
       </div>
       <div className="cards">
-        {SCIENCE_CARDS.map((c) => (
-          <article key={c.title} className="card">
-            <div className="thumb" style={{ "--c1": c.c1, "--c2": c.c2 } as React.CSSProperties} />
+        {items.slice(0, 4).map((c) => (
+          <article key={c.id} className="card">
+            {c.image ? (
+              <Image className="card-img" src={c.image} alt="" width={640} height={320} sizes="(max-width: 640px) 100vw, 380px" />
+            ) : (
+              <div className="thumb" style={{ "--c1": "#123e6b", "--c2": "#0a2340" } as React.CSSProperties} />
+            )}
             <div className="card-in">
-              <span className="cat">{c.cat}</span>
+              <span className="cat">{c.sectionLabel}</span>
               <h4>
-                <a href={VAST} target="_blank" rel="noopener noreferrer">
-                  {c.title}
-                </a>
+                <Link href={`/bai-viet/${c.id}`}>{c.title}</Link>
               </h4>
-              <span className="meta">{c.meta}</span>
+              <span className="meta">{c.dateLabel}</span>
             </div>
           </article>
         ))}
@@ -105,7 +93,34 @@ function ScienceCards() {
   );
 }
 
-function AsidePanels() {
+function InfoPanels() {
+  return (
+    <>
+      <div className="panel alert">
+        <h3>Cảnh báo</h3>
+        <b>Động đất độ lớn 3,5</b>
+        <p style={{ margin: "4px 0 0" }}>Xã Măng Bút, tỉnh Quảng Ngãi · 26/10/2026</p>
+      </div>
+      <div className="panel">
+        <h3>Đề tài nổi bật</h3>
+        <ul className="list">
+          <li>
+            <a href={VAST} target="_blank" rel="noopener noreferrer">
+              Nghiên cứu đa dạng sinh học khu hệ cá ở Bến Tre
+            </a>
+          </li>
+          <li>
+            <a href={VAST} target="_blank" rel="noopener noreferrer">
+              An toàn thực phẩm và giảm ô nhiễm nuôi thủy sản ở Quảng Ninh
+            </a>
+          </li>
+        </ul>
+      </div>
+    </>
+  );
+}
+
+function AsidePanels({ activity }: { activity: HomeData["activity"] }) {
   return (
     <aside className="stack">
       <div className="panel alert">
@@ -114,13 +129,13 @@ function AsidePanels() {
         <p style={{ margin: "4px 0 0" }}>Xã Măng Bút, tỉnh Quảng Ngãi · 26/10/2026</p>
       </div>
       <div className="panel">
-        <h3>Tin tức hoạt động</h3>
+        <h3>
+          <Link href="/tin-tuc/hoat-dong">Tin tức hoạt động</Link>
+        </h3>
         <ul className="list">
-          {ACTIVITY_NEWS.map((t) => (
-            <li key={t}>
-              <a href={VAST} target="_blank" rel="noopener noreferrer">
-                {t}
-              </a>
+          {activity.map((n) => (
+            <li key={n.id}>
+              <Link href={`/bai-viet/${n.id}`}>{n.title}</Link>
             </li>
           ))}
         </ul>
@@ -159,7 +174,7 @@ function PartnerLinks() {
   );
 }
 
-export function HomeVariants({ articles, today }: Props) {
+export function HomeVariants({ articles, today, home }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const raw = Number(params.get("v") ?? "1");
@@ -203,38 +218,27 @@ export function HomeVariants({ articles, today }: Props) {
         </div>
       </div>
 
-      <Banner />
+      {variant !== 3 && <Banner featured={home.featured} />}
 
-      <div className="wrap portal-main">
-        {/* Services use negative margin to sit on the banner edge — keep as first child. */}
-        <Services />
-
+      <div className={variant === 3 ? "wrap portal-main portal-main--nobanner" : "wrap portal-main"}>
         {variant === 1 && (
           <>
-            <div className="cols">
-              <ScienceCards />
-              <AsidePanels />
+            <div className="sci-layout">
+              <SciNews official={home.science} />
+              <PressSidebar articles={articles} />
             </div>
-            <PressSection articles={articles} layout="grid" />
+            <div className="info-row">
+              <InfoPanels />
+            </div>
           </>
         )}
 
-        {variant === 2 && (
-          <div className="cols cols--press-right">
-            <div className="stack">
-              <ScienceCards />
-              <AsidePanels />
-            </div>
-            <PressSection articles={articles} layout="rail" className="press--rail" id="press-h-v2" />
-          </div>
-        )}
-
-        {variant === 3 && (
+        {variant !== 1 && (
           <>
             <PressSection articles={articles} layout="hot" className="press--hot" id="press-h-v3" />
             <div className="cols">
-              <ScienceCards />
-              <AsidePanels />
+              <ScienceCards items={home.science} />
+              <AsidePanels activity={home.activity} />
             </div>
           </>
         )}
