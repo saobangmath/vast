@@ -5,7 +5,15 @@ type NavItem = { label: string; href: string; children?: { label: string; href: 
 const VAST = "https://vast.gov.vn/";
 
 const NAV: NavItem[] = [
-  { label: "Trang chủ", href: "/" },
+  {
+    label: "Trang chủ",
+    href: "/",
+    children: [
+      { label: "Trang Chủ 1 — báo chí cuối trang", href: "/" },
+      { label: "Trang Chủ 2 — báo chí cột phải", href: "/?v=2" },
+      { label: "Trang Chủ 3 — báo chí đầu trang", href: "/?v=3" },
+    ],
+  },
   {
     label: "Cơ cấu tổ chức",
     href: VAST,
