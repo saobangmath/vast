@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, Source_Serif_4 } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
+import "./portal.css";
 
 const sans = Be_Vietnam_Pro({
   variable: "--font-sans",
@@ -30,16 +32,8 @@ export default function RootLayout({
     <html lang="vi">
       <body className={`${sans.variable} ${display.variable} antialiased`}>
         <SiteHeader />
-        <main>{children}</main>
-        <footer className="site-footer">
-          <div className="site-footer__inner">
-            <strong>Viện Hàn lâm Khoa học và Công nghệ Việt Nam</strong>
-            <p>
-              Địa chỉ: Số 18, đường Hoàng Quốc Việt, phường Nghĩa Đô, Thành phố Hà Nội. Demo tổng hợp
-              tin KHCN — khi phát hành lại cần ghi rõ nguồn gốc bài viết.
-            </p>
-          </div>
-        </footer>
+        <main id="main">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );
