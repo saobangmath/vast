@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     )
     crawl_timeout_seconds: float = 20.0
     related_similarity_threshold: float = 0.35
-    # Periodic crawler (in-process; disabled automatically on Vercel serverless)
-    crawl_scheduler_enabled: bool = True
-    crawl_interval_seconds: int = 300  # 5 minutes
+    # In-API asyncio scheduler (off by default — use `python -m scripts.crawl_loop`)
+    crawl_scheduler_enabled: bool = False
+    crawl_interval_seconds: int = 3600  # 1 hour
     crawl_on_startup: bool = True
 
     @property

@@ -12,22 +12,22 @@ Hybrid portal inspired by [vast.gov.vn](https://vast.gov.vn/) with a Báo Mới�
 
 ```bash
 make install   # backend venv + frontend deps
-make api       # terminal 1 → http://localhost:8000 (crawler every 5 min)
+make api       # terminal 1 → http://localhost:8000
 make web       # terminal 2 → http://localhost:3000
 ```
 
-The API process runs the crawler on startup and then every **5 minutes** (`CRAWL_INTERVAL_SECONDS=300`).  
-Manual one-shots are still available via `make crawl` / `make crawl-api`. Check status with `make crawl-status`.
+**Automatic crawl (production):** GitHub Actions every **1 hour** → `POST /api/crawl/run`  
+(set repo secret `CRAWL_API_BASE_URL`). Optional local loop: `make crawl-loop`.
 
 ## Deploy (Vercel + Neon)
 
 See **[DEPLOY.md](DEPLOY.md)**:
 
 - **Frontend** → Vercel project, Root Directory `frontend`
-- **Backend** → Vercel project, Root Directory `backend` (+ Cron `/api/crawl/run`)
+- **Backend** → Vercel project, Root Directory `backend`
 - **Postgres** → Neon (`DATABASE_URL` on the backend project)
-- **CI/CD** → connect the GitHub repo in Vercel; every merge/push to `main` auto-deploys both projects
-  (GitHub Actions in `.github/workflows/ci.yml` only runs lint/import checks)
+- **CI/CD** → Vercel auto-deploys on `main`
+- **Crawl** → GitHub Actions hourly → backend `/api/crawl/run` (not Vercel Cron)
 
 ## Product scope (v1)
 
