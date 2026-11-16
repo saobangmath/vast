@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArticleCard } from "@/components/ArticleCard";
 import type { ArticleCard as ArticleCardType, Topic } from "@/lib/api";
@@ -21,57 +20,40 @@ export function HubClient({ hot, newer, topics, initialTab = "hot", initialTopic
 
   const availableTopics = useMemo(() => {
     const pool = [...hot, ...newer];
-    const used = new Set(
-      pool.map((a) => a.topic?.slug).filter((slug): slug is string => Boolean(slug)),
-    );
+    const used = new Set(pool.map((a) => a.topic?.slug).filter((slug): slug is string => Boolean(slug)));
     return topics.filter((t) => used.has(t.slug));
   }, [hot, newer, topics]);
 
   useEffect(() => {
-    if (topic && !availableTopics.some((t) => t.slug === topic)) {
-      setTopic(undefined);
-    }
+    if (topic && !availableTopics.some((t) => t.slug === topic)) setTopic(undefined);
   }, [topic, availableTopics]);
 
   const items = useMemo(() => {
     const base = tab === "hot" ? hot : newer;
-    if (!topic) return base;
-    return base.filter((a) => a.topic?.slug === topic);
+    return topic ? base.filter((a) => a.topic?.slug === topic) : base;
   }, [hot, newer, tab, topic]);
 
   return (
     <div className="hub">
-      <div className="hub__toolbar">
-        <div className="tabs" role="tablist" aria-label="Luồng tin">
-          <button
-            type="button"
-            className={tab === "hot" ? "tab tab--active" : "tab"}
-            onClick={() => setTab("hot")}
-          >
+      <div className="hub-bar">
+        <div className="seg2" role="tablist" aria-label="Luồng tin">
+          <button type="button" role="tab" aria-selected={tab === "hot"} onClick={() => setTab("hot")}>
             Nóng
           </button>
-          <button
-            type="button"
-            className={tab === "new" ? "tab tab--active" : "tab"}
-            onClick={() => setTab("new")}
-          >
+          <button type="button" role="tab" aria-selected={tab === "new"} onClick={() => setTab("new")}>
             Mới
           </button>
         </div>
         {availableTopics.length > 0 && (
-          <div className="topic-row">
-            <button
-              type="button"
-              className={!topic ? "topic-chip topic-chip--active" : "topic-chip"}
-              onClick={() => setTopic(undefined)}
-            >
+          <div className="chips filters hub-topics">
+            <button type="button" className={`pill ${!topic ? "on" : ""}`} onClick={() => setTopic(undefined)}>
               Tất cả
             </button>
             {availableTopics.map((t) => (
               <button
                 key={t.slug}
                 type="button"
-                className={topic === t.slug ? "topic-chip topic-chip--active" : "topic-chip"}
+                className={`pill ${topic === t.slug ? "on" : ""}`}
                 onClick={() => setTopic(t.slug)}
               >
                 {t.name}
@@ -81,17 +63,27 @@ export function HubClient({ hot, newer, topics, initialTab = "hot", initialTopic
         )}
       </div>
 
-      {items.length > 0 && (
-        <div className="story-list">
-          {items.map((article, idx) => (
-            <ArticleCard key={article.id} article={article} featured={idx === 0 && tab === "hot"} />
+      {items.length > 0 ? (
+        <div className="news-list">
+          {items.map((article) => (
+            <ArticleCard key={article.id} article={article} />
           ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <div className="empty-ico" aria-hidden>
+            <svg viewBox="0 0 24 24">
+              <path d="M4 5h16v14H4zM8 9h8M8 13h5" />
+            </svg>
+          </div>
+          <h2>Chưa có tin để hiển thị</h2>
+          <p>Nguồn tổng hợp tin chưa phản hồi hoặc chưa có bài phù hợp. Vui lòng thử lại sau.</p>
         </div>
       )}
 
-      <p className="hub__note">
-        Mỗi bài hiển thị tóm tắt trên cổng VAST. Đọc đầy đủ tại nguồn gốc qua nút{" "}
-        <Link href="/tin-nong-khcn">Đọc gốc</Link> trên trang chi tiết.
+      <p className="note">
+        Mỗi bài hiển thị tóm tắt trên cổng VAST. Bấm &ldquo;Đọc tại nguồn&rdquo; để đọc đầy đủ trên trang của cơ quan
+        báo chí.
       </p>
     </div>
   );

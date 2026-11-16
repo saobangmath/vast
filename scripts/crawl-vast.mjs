@@ -34,6 +34,12 @@ const SECTIONS = [
   { slug: "du-lieu-giai-thuong-1", key: "giai-thuong-du-lieu", name: "Dữ liệu Giải thưởng", all: true },
   { slug: "thong-tin-ao-tao", key: "dao-tao", name: "Thông tin đào tạo" },
   { slug: "thong-tin-tuyen-sinh", key: "tuyen-sinh", name: "Thông tin tuyển sinh" },
+  // KHCN, ĐMST và CĐS portal (separate Liferay site)
+  { site: "chuyen-doi-so", slug: "ban-tin-chuyen-doi-so", key: "cds-ban-tin", name: "Bản tin phát triển KH&CN, ĐMST & CĐS" },
+  { site: "chuyen-doi-so", slug: "viet-nam-chuyen-doi-so", key: "cds-viet-nam", name: "Việt Nam phát triển KH&CN, ĐMST & CĐS" },
+  { site: "chuyen-doi-so", slug: "cai-cach-hanh-chinh", key: "cds-cai-cach-hanh-chinh", name: "Cải cách hành chính" },
+  { site: "chuyen-doi-so", slug: "ung-dung-cntt", key: "cds-ung-dung-cntt", name: "Ứng dụng CNTT" },
+  { site: "chuyen-doi-so", slug: "ipv6", key: "cds-ipv6", name: "IPv6" },
 ];
 
 fs.mkdirSync(path.join(OUT, "articles"), { recursive: true });
@@ -109,7 +115,7 @@ function parseList(html, section) {
 }
 
 async function crawlSection(section) {
-  const first = await get(`${BASE}/web/guest/${section.slug}`);
+  const first = await get(`${BASE}/web/${section.site ?? "guest"}/${section.slug}`);
   // Page 1 comes from the plain URL. The portlet instance id (needed for page 2+) is only
   // present in the pagination links, so a section with a single page has no `p_p_id=`.
   const idm = first.match(/p_p_id=(CmsViewTinTrangChuyenMuc_WAR_CmsViewEcoITportlet_INSTANCE_\w+)/);
@@ -122,8 +128,8 @@ async function crawlSection(section) {
     if (cur > 1 && !P) break;
     const url =
       cur === 1
-        ? `${BASE}/web/guest/${section.slug}`
-        : `${BASE}/web/guest/${section.slug}?p_p_id=${P}&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view` +
+        ? `${BASE}/web/${section.site ?? "guest"}/${section.slug}`
+        : `${BASE}/web/${section.site ?? "guest"}/${section.slug}?p_p_id=${P}&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view` +
           `&p_p_col_id=column-1&p_p_col_count=1&_${P}_delta=10&_${P}_keywords=&_${P}_advancedSearch=false` +
           `&_${P}_andOperator=true&_${P}_resetCur=false&_${P}_cur=${cur}`;
     const items = parseList(await get(url), section);
@@ -161,10 +167,10 @@ function clean(h) {
     .replace(/<(script|style)[\s\S]*?<\/\1>/gi, "")
     .replace(/\s(style|class|id|width|height|align|dir|lang|data-[\w-]+)=("[^"]*"|'[^']*')/gi, "")
     // internal routes for links to other crawled content
-    .replace(/\shref=("|')https?:\/\/vast\.gov\.vn\/web\/guest\/tin-chi-tiet\/-\/chi-tiet\/[^"']*?(\d+-\d+)(?:\.html)?(?:\?[^"']*)?\1/gi, (_, q, id) => ` href=${q}/bai-viet/${id}${q}`)
+    .replace(/\shref=("|')https?:\/\/vast\.gov\.vn\/web\/[a-z-]+\/tin-chi-tiet\/-\/chi-tiet\/[^"']*?(\d+-\d+)(?:\.html)?(?:\?[^"']*)?\1/gi, (_, q, id) => ` href=${q}/bai-viet/${id}${q}`)
     .replace(/\shref=("|')[^"']*phongBanId(?:=|&#x3d;|&amp;#x3d;)(\d+)[^"']*\1/gi, (_, q, id) => ` href=${q}/don-vi/${id}${q}`)
     .replace(/\ssrc=("|')(\/[^"']*)\1/gi, (_, q, u) => ` src=${q}${BASE}${u}${q}`)
-    .replace(/\shref=("|')(\/(?!\/)[^"']*)\1/gi, (_, q, u) => ` href=${q}${BASE}${u}${q}`)
+    .replace(/\shref=("|')(\/(?!\/|don-vi\/|bai-viet\/)[^"']*)\1/gi, (_, q, u) => ` href=${q}${BASE}${u}${q}`)
     .replace(/<(p|div|span|strong|em|b|i)>\s*(&nbsp;|\s)*<\/\1>/gi, "")
     .replace(/(<br\s*\/?>\s*){3,}/gi, "<br />")
     .trim();

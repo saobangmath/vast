@@ -8,13 +8,13 @@ const NAV: NavItem[] = [
   { label: "Trang chủ", href: "/" },
   {
     label: "Cơ cấu tổ chức",
-    href: VAST,
+    href: "/co-cau-to-chuc",
     children: [
-      { label: "Lãnh đạo và Quản lý", href: VAST },
-      { label: "Các đơn vị chức năng", href: VAST },
-      { label: "Các đơn vị nghiên cứu", href: VAST },
-      { label: "Các đơn vị khác", href: VAST },
-      { label: "Doanh nghiệp Nhà nước", href: VAST },
+      { label: "Lãnh đạo và Quản lý", href: "/co-cau-to-chuc/lanh-dao" },
+      { label: "Các đơn vị chức năng", href: "/co-cau-to-chuc/hanh-chinh" },
+      { label: "Các đơn vị nghiên cứu", href: "/co-cau-to-chuc/nghien-cuu" },
+      { label: "Các đơn vị khác", href: "/co-cau-to-chuc/su-nghiep" },
+      { label: "Doanh nghiệp Nhà nước", href: "/co-cau-to-chuc/doanh-nghiep" },
     ],
   },
   {
@@ -30,7 +30,7 @@ const NAV: NavItem[] = [
       { label: "Tin nóng KHCN (tổng hợp từ báo chí)", href: "/tin-nong-khcn" },
     ],
   },
-  { label: "Chương trình KHCN trọng điểm", href: VAST },
+  { label: "Chương trình KHCN trọng điểm", href: "/chuong-trinh-khcn-trong-diem" },
   {
     label: "Giải thưởng Trần Đại Nghĩa",
     href: "/giai-thuong",
@@ -42,7 +42,17 @@ const NAV: NavItem[] = [
       { label: "Dữ liệu Giải thưởng", href: "/giai-thuong/giai-thuong-du-lieu" },
     ],
   },
-  { label: "KHCN, ĐMST và CĐS", href: VAST },
+  {
+    label: "KHCN, ĐMST và CĐS",
+    href: "/chuyen-doi-so",
+    children: [
+      { label: "Bản tin phát triển KH&CN, ĐMST & CĐS", href: "/chuyen-doi-so/cds-ban-tin" },
+      { label: "Việt Nam phát triển KH&CN, ĐMST & CĐS", href: "/chuyen-doi-so/cds-viet-nam" },
+      { label: "Cải cách hành chính", href: "/chuyen-doi-so/cds-cai-cach-hanh-chinh" },
+      { label: "Ứng dụng CNTT", href: "/chuyen-doi-so/cds-ung-dung-cntt" },
+      { label: "IPv6", href: "/chuyen-doi-so/cds-ipv6" },
+    ],
+  },
   {
     label: "Hoạt động đào tạo",
     href: "/hoat-dong-dao-tao",
@@ -75,6 +85,7 @@ export function SiteHeader() {
         <div className="wrap">
           <span>Cổng thông tin điện tử chính thức</span>
           <div className="links">
+            <Link href="/lien-he">Liên hệ</Link>
             <a href={VAST} target="_blank" rel="noopener noreferrer">
               vast.gov.vn
             </a>

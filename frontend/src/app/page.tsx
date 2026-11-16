@@ -1,12 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
-import { PressFeed } from "@/components/PressFeed";
+import { PressSidebar } from "@/components/PressSidebar";
+import { SciNews } from "@/components/SciNews";
 import { fetchNew } from "@/lib/api";
 import { formatDate, getIndex, sectionName } from "@/lib/content";
-import {
-  PARTNER_LINKS,
-  SERVICES,
-} from "@/lib/vast-content";
+import { PARTNER_LINKS } from "@/lib/vast-content";
 
 const VAST = "https://vast.gov.vn/";
 
@@ -24,8 +21,10 @@ export default async function HomePage() {
   const news = getIndex().items;
   const activity = news.filter((n) => n.section === "hoat-dong");
   const featured = activity.find((n) => n.image) ?? news[0];
-  const activityList = activity.filter((n) => n.id !== featured?.id).slice(0, 4);
-  const science = news.filter((n) => n.section.startsWith("khcn") || n.section.includes("nghien-cuu") || n.section === "phat-trien-cong-nghe").slice(0, 4);
+  const official = news
+    .filter((n) => n.section.startsWith("khcn") || n.section.includes("nghien-cuu") || n.section === "phat-trien-cong-nghe")
+    .slice(0, 7)
+    .map((n) => ({ id: n.id, title: n.title, image: n.image, dateLabel: formatDate(n.date), sectionLabel: sectionName(n.section) }));
   const today = new Intl.DateTimeFormat("vi-VN", { dateStyle: "full", timeZone: "Asia/Ho_Chi_Minh" }).format(
     new Date(),
   );
@@ -76,93 +75,33 @@ export default async function HomePage() {
 
       <div className="wrap portal-main">
 
-        <section className="services" aria-label="Hệ thống nội bộ">
-          {SERVICES.map((s) => (
-            <a key={s.code} className="svc" href={VAST} target="_blank" rel="noopener noreferrer">
-              <div className="ico">
-                <svg viewBox="0 0 24 24" aria-hidden>
-                  <path d={s.icon} />
-                </svg>
-              </div>
-              <b>{s.name}</b>
-              <span>{s.code}</span>
-            </a>
-          ))}
-        </section>
-
-        <div className="cols">
-          <section>
-            <div className="sec-head">
-              <h2 className="sec-h">Tin khoa học - Công nghệ</h2>
-              <Link href="/tin-tuc/khcn-trong-nuoc">Xem tất cả →</Link>
-            </div>
-            <div className="cards">
-              {science.map((c) => (
-                <article key={c.id} className="card">
-                  {c.image ? (
-                    <Image className="card-img" src={c.image} alt="" width={640} height={320} sizes="(max-width: 640px) 100vw, 380px" />
-                  ) : (
-                    <div className="thumb" style={{ "--c1": "#123e6b", "--c2": "#0a2340" } as React.CSSProperties} />
-                  )}
-                  <div className="card-in">
-                    <span className="cat">{sectionName(c.section)}</span>
-                    <h4>
-                      <Link href={`/bai-viet/${c.id}`}>{c.title}</Link>
-                    </h4>
-                    <span className="meta">{formatDate(c.date)}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <aside className="stack">
-            <div className="panel alert">
-              <h3>Cảnh báo</h3>
-              <b>Động đất độ lớn 3,5</b>
-              <p style={{ margin: "4px 0 0" }}>Xã Măng Bút, tỉnh Quảng Ngãi · 26/10/2026</p>
-            </div>
-            <div className="panel">
-              <h3><Link href="/tin-tuc/hoat-dong">Tin tức hoạt động</Link></h3>
-              <ul className="list">
-                {activityList.map((n) => (
-                  <li key={n.id}>
-                    <Link href={`/bai-viet/${n.id}`}>{n.title}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="panel">
-              <h3>Đề tài nổi bật</h3>
-              <ul className="list">
-                <li>
-                  <a href={VAST} target="_blank" rel="noopener noreferrer">
-                    Nghiên cứu đa dạng sinh học khu hệ cá ở Bến Tre
-                  </a>
-                </li>
-                <li>
-                  <a href={VAST} target="_blank" rel="noopener noreferrer">
-                    An toàn thực phẩm và giảm ô nhiễm nuôi thủy sản ở Quảng Ninh
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </aside>
+        <div className="sci-layout">
+          <SciNews official={official} />
+          <PressSidebar articles={articles} />
         </div>
 
-        <section className="press" aria-labelledby="press-h">
-          <div className="sec-head">
-            <h2 className="sec-h" id="press-h">
-              Khoa học &amp; công nghệ trên báo chí
-            </h2>
-            <Link href="/tin-nong-khcn">Tin nóng KHCN →</Link>
+        <div className="info-row">
+          <div className="panel alert">
+            <h3>Cảnh báo</h3>
+            <b>Động đất độ lớn 3,5</b>
+            <p style={{ margin: "4px 0 0" }}>Xã Măng Bút, tỉnh Quảng Ngãi · 26/10/2026</p>
           </div>
-          <PressFeed articles={articles} />
-          <p className="note">
-            Tiêu đề và liên kết được tổng hợp tự động từ các cơ quan báo chí; bấm vào để đọc bài gốc trên trang của
-            báo. Nội dung thuộc quyền của từng cơ quan báo chí.
-          </p>
-        </section>
+          <div className="panel">
+            <h3>Đề tài nổi bật</h3>
+            <ul className="list">
+              <li>
+                <a href={VAST} target="_blank" rel="noopener noreferrer">
+                  Nghiên cứu đa dạng sinh học khu hệ cá ở Bến Tre
+                </a>
+              </li>
+              <li>
+                <a href={VAST} target="_blank" rel="noopener noreferrer">
+                  An toàn thực phẩm và giảm ô nhiễm nuôi thủy sản ở Quảng Ninh
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
 
         <section className="links-row">
           <h2 className="sec-h">Liên kết &amp; đào tạo</h2>

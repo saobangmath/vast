@@ -86,3 +86,8 @@ export function formatRelativeTime(iso: string | null): string {
   const days = Math.floor(hours / 24);
   return `${days} ngày`;
 }
+
+/** Stable accent hue per outlet so sources are recognisable at a glance. */
+export function sourceHue(key: string): number {
+  return [...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
+}

@@ -39,6 +39,12 @@ export const GROUPS: Group[] = [
     base: "/hoat-dong-dao-tao",
     sections: ["dao-tao", "tuyen-sinh"],
   },
+  {
+    key: "chuyen-doi-so",
+    name: "KHCN, ĐMST và CĐS",
+    base: "/chuyen-doi-so",
+    sections: ["cds-ban-tin", "cds-viet-nam", "cds-cai-cach-hanh-chinh", "cds-ung-dung-cntt", "cds-ipv6"],
+  },
 ];
 
 export const getGroup = (key: string) => GROUPS.find((g) => g.key === key);
@@ -90,4 +96,148 @@ export function sectionName(key: string): string {
 export function formatDate(iso: string): string {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
+}
+
+/* ───────────── static pages: organisation units, leadership, contact ───────────── */
+
+export type Unit = { id: string; name: string; image: string | null; html: string; title: string };
+export type UnitGroup = { key: string; name: string; blurb: string; units: Unit[] };
+type Pages = { groups: UnitGroup[]; leadership: string; contact: string; awardIntro: string };
+
+let pagesCache: Pages | null = null;
+export function getPages(): Pages {
+  if (!pagesCache) {
+    try {
+      pagesCache = JSON.parse(fs.readFileSync(path.join(DIR, "pages.json"), "utf8")) as Pages;
+    } catch {
+      pagesCache = { groups: [], leadership: "", contact: "", awardIntro: "" };
+    }
+  }
+  return pagesCache;
+}
+
+export function findUnit(id: string): { unit: Unit; group: UnitGroup } | null {
+  for (const group of getPages().groups) {
+    const unit = group.units.find((u) => u.id === id);
+    if (unit) return { unit, group };
+  }
+  return null;
+}
+
+const SMALL = new Set(["và", "của", "cho", "về", "trong", "tại", "theo", "với", "các", "ở"]);
+/** "VIỆN KHOA HỌC VẬT LIỆU" -> "Viện Khoa học Vật liệu"-style title case. */
+export function titleCase(s: string): string {
+  return s
+    .toLocaleLowerCase("vi")
+    .split(/\s+/)
+    .map((w, i) => (i > 0 && SMALL.has(w) ? w : w.charAt(0).toLocaleUpperCase("vi") + w.slice(1)))
+    .join(" ");
+}
+
+const entities = (s: string) =>
+  s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+
+/** Plain-text lines of a crawled HTML fragment. */
+export function htmlLines(html: string): string[] {
+  return entities(
+    html
+      .replace(/<\/(div|p|li|h\d|tr)>|<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/[ \t ]+/g, " "),
+  )
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+export type Fact = { label: string; value: string };
+export type UnitBlock = { title: string; lines: string[] };
+export type UnitView = {
+  facts: Fact[]; // key facts above the first heading (address, head, decision…)
+  contact: Fact[]; // "ĐỊA CHỈ LIÊN HỆ"
+  address: string;
+  leaders: { role: string; names: string[] }[];
+  blocks: UnitBlock[]; // remaining sections (functions, council, …)
+};
+
+const isHeading = (l: string) =>
+  l.length >= 4 && l.length <= 70 && !l.includes(":") && l === l.toLocaleUpperCase("vi") && /\p{L}/u.test(l);
+const kv = (l: string): Fact | null => {
+  const m = l.match(/^([^:]{2,60}):\s*(.+)$/);
+  return m ? { label: m[1].trim(), value: m[2].trim() } : null;
+};
+
+/** Turn the legacy table markup of a unit page into structured data for the new layout. */
+export function parseUnit(html: string): UnitView {
+  const lines = htmlLines(html);
+  const view: UnitView = { facts: [], contact: [], address: "", leaders: [], blocks: [] };
+  let cur: UnitBlock | null = null;
+  const head: string[] = [];
+  const sections: UnitBlock[] = [];
+  for (const l of lines) {
+    if (isHeading(l)) {
+      cur = { title: l, lines: [] };
+      sections.push(cur);
+    } else if (cur) cur.lines.push(l);
+    else head.push(l);
+  }
+  // key facts: "Trụ sở: …", "Viện trưởng: …" (+ following name lines), decision…
+  let lastRole: Fact | null = null;
+  for (const l of head) {
+    const f = kv(l);
+    if (f) {
+      view.facts.push(f);
+      lastRole = f;
+    } else if (lastRole && /^(Phó|Giám|Viện|Chủ|Trưởng|Hiệu)/i.test(lastRole.label)) lastRole.value += `\n${l}`;
+    else if (l) view.facts.push({ label: "", value: l });
+  }
+  for (const s of sections) {
+    if (!s.lines.length) continue;
+    if (/ĐỊA CHỈ/.test(s.title)) {
+      for (const l of s.lines) {
+        const f = kv(l);
+        if (f) view.contact.push(f);
+        else if (!view.address) view.address = l;
+      }
+    } else if (/LÃNH ĐẠO/.test(s.title)) {
+      let role: { role: string; names: string[] } | null = null;
+      for (const l of s.lines) {
+        if (l.endsWith(":")) {
+          role = { role: l.slice(0, -1), names: [] };
+          view.leaders.push(role);
+        } else if (role) role.names.push(l);
+        else {
+          const f = kv(l);
+          if (f) view.leaders.push({ role: f.label, names: [f.value] });
+        }
+      }
+    } else view.blocks.push(s);
+  }
+  return view;
+}
+
+export type ContactCard = { title: string; lines: Fact[]; note: string[] };
+/** Contact page: blocks separated by a dashed line; first line is the title. */
+export function parseContact(html: string): ContactCard[] {
+  const cards: ContactCard[] = [];
+  let cur: string[] = [];
+  const flush = () => {
+    if (!cur.length) return;
+    const [title, ...rest] = cur;
+    const lines: Fact[] = [];
+    const note: string[] = [];
+    for (const l of rest) {
+      const f = kv(l);
+      if (f) lines.push(f);
+      else note.push(l);
+    }
+    cards.push({ title, lines, note });
+    cur = [];
+  };
+  for (const l of htmlLines(html)) {
+    if (/^-{4,}$/.test(l)) flush();
+    else cur.push(l);
+  }
+  flush();
+  return cards;
 }
