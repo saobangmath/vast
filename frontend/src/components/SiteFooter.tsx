@@ -9,28 +9,6 @@ export function SiteFooter() {
           <p style={{ margin: 0 }}>Số 18, đường Hoàng Quốc Việt, phường Nghĩa Đô, Thành phố Hà Nội</p>
         </div>
         <div>
-          <h5>Truy cập nhanh</h5>
-          <ul>
-            <li>
-              <Link href="/">Trang chủ</Link>
-            </li>
-            <li>
-              <Link href="/co-cau-to-chuc">Cơ cấu tổ chức</Link>
-            </li>
-            <li>
-              <Link href="/tin-tuc">Tin tức - Sự kiện</Link>
-            </li>
-            <li>
-              <Link href="/tin-nong-khcn">Tin nóng KHCN</Link>
-            </li>
-            <li>
-              <a href="https://vast.gov.vn/" target="_blank" rel="noopener noreferrer">
-                vast.gov.vn
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div>
           <h5>Hỗ trợ</h5>
           <ul>
             <li>

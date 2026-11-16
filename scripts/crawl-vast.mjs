@@ -2,6 +2,7 @@
 // Crawl news from vast.gov.vn (Liferay, server-rendered) into frontend/content/.
 // Usage: node scripts/crawl-vast.mjs [--since 2024-01-01] [--limit-pages N] [--only slug]
 // Polite by design: sequential requests with a delay, retries, and an on-disk cache.
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,8 +48,17 @@ fs.mkdirSync(CACHE, { recursive: true });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let last = 0;
+// Cache key. Paginated listing URLs (with a query) hash the WHOLE url: they used to be keyed by
+// the last 90 bytes only, so the same page of two different base paths collided.
+function cacheFile(url) {
+  const key = url.includes("?")
+    ? "q-" + crypto.createHash("sha1").update(url).digest("hex")
+    : Buffer.from(url).toString("base64url").slice(-120);
+  return path.join(CACHE, key + ".html");
+}
+
 async function get(url) {
-  const file = path.join(CACHE, Buffer.from(url).toString("base64url").slice(-120) + ".html");
+  const file = cacheFile(url);
   if (fs.existsSync(file)) return fs.readFileSync(file, "utf8");
   for (let attempt = 1; attempt <= 4; attempt++) {
     const wait = last + DELAY_MS - Date.now();
@@ -114,8 +124,21 @@ function parseList(html, section) {
   return items;
 }
 
+/** Final URL (path) after redirects: some listing pages redirect and a redirect drops the paging query. */
+async function resolveBase(url) {
+  const wait = last + DELAY_MS - Date.now();
+  if (wait > 0) await sleep(wait);
+  last = Date.now();
+  const r = await fetch(url, { headers: { "user-agent": "vast-redesign-demo-crawler/1.0" }, signal: AbortSignal.timeout(30000) });
+  await r.body?.cancel();
+  const u = new URL(r.url);
+  return u.origin + u.pathname;
+}
+
 async function crawlSection(section) {
-  const first = await get(`${BASE}/web/${section.site ?? "guest"}/${section.slug}`);
+  const startUrl = `${BASE}/web/${section.site ?? "guest"}/${section.slug}`;
+  const base = await resolveBase(startUrl);
+  const first = await get(base);
   // Page 1 comes from the plain URL. The portlet instance id (needed for page 2+) is only
   // present in the pagination links, so a section with a single page has no `p_p_id=`.
   const idm = first.match(/p_p_id=(CmsViewTinTrangChuyenMuc_WAR_CmsViewEcoITportlet_INSTANCE_\w+)/);
@@ -128,16 +151,19 @@ async function crawlSection(section) {
     if (cur > 1 && !P) break;
     const url =
       cur === 1
-        ? `${BASE}/web/${section.site ?? "guest"}/${section.slug}`
-        : `${BASE}/web/${section.site ?? "guest"}/${section.slug}?p_p_id=${P}&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view` +
+        ? base
+        : `${base}?p_p_id=${P}&p_p_lifecycle=0&p_p_state=normal&p_p_mode=view` +
           `&p_p_col_id=column-1&p_p_col_count=1&_${P}_delta=10&_${P}_keywords=&_${P}_advancedSearch=false` +
           `&_${P}_andOperator=true&_${P}_resetCur=false&_${P}_cur=${cur}`;
     const items = parseList(await get(url), section);
-    if (!items.length || seen.has(items[0].id)) break; // past the last page (server repeats it)
-    items.forEach((i) => seen.add(i.id));
-    const fresh = section.all ? items : items.filter((i) => i.date && new Date(i.date) >= SINCE);
+    // Consecutive pages can overlap by an item, so stop only when a page brings nothing new
+    // (past the last page the server just repeats it).
+    const unseen = items.filter((i) => !seen.has(i.id));
+    if (!unseen.length) break;
+    unseen.forEach((i) => seen.add(i.id));
+    const fresh = section.all ? unseen : unseen.filter((i) => i.date && new Date(i.date) >= SINCE);
     out.push(...fresh);
-    if (!section.all && fresh.length < items.length) break; // reached older than cutoff (list is newest-first)
+    if (!section.all && fresh.length < unseen.length) break; // reached older than cutoff (list is newest-first)
     if (cur % 10 === 0) console.log(`    [${section.key}] page ${cur}, ${out.length} items`);
   }
   console.log(`  [${section.key}] ${out.length} items since ${arg("--since", "2024-01-01")}`);

@@ -43,9 +43,6 @@ function Banner({ featured }: { featured: HomeData["featured"] }) {
             <Link className="cta" href="/tin-nong-khcn">
               Mở Tin nóng KHCN →
             </Link>
-            <a className="cta cta--ghost" href={VAST} target="_blank" rel="noopener noreferrer">
-              vast.gov.vn
-            </a>
           </div>
         </div>
         {featured && (

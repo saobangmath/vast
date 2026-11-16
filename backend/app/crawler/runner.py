@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 import feedparser
 import httpx
+from bs4 import BeautifulSoup
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -117,6 +118,16 @@ def _upsert_article(
     stats.inserted += 1
 
 
+def first_image_in_html(raw: str | None) -> str | None:
+    """Thanh Nien, Genk and VietnamNet put the picture as an <img> inside the item description
+    instead of media:content / enclosure."""
+    if not raw:
+        return None
+    img = BeautifulSoup(raw, "html.parser").find("img")
+    src = (img.get("src") or "").strip() if img else ""
+    return src if src.startswith(("http://", "https://")) else None
+
+
 def fetch_rss(cfg: SourceConfig) -> list[dict]:
     if not cfg.feed_url:
         return []
@@ -149,6 +160,10 @@ def fetch_rss(cfg: SourceConfig) -> list[dict]:
                 if str(enc.get("type", "")).startswith("image"):
                     image_url = enc.get("href")
                     break
+        if not image_url:
+            image_url = first_image_in_html(
+                getattr(entry, "summary", None) or getattr(entry, "description", None)
+            )
 
         published = parse_datetime(
             getattr(entry, "published", None) or getattr(entry, "updated", None)
