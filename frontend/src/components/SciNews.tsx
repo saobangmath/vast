@@ -10,10 +10,9 @@ export type OfficialNews = {
 };
 
 /** Official science & technology news from the Academy: 1 lead + 3 compact + a row of 3. */
-export function SciNews({ official }: { official: OfficialNews[] }) {
+export function SciNews({ official, below }: { official: OfficialNews[]; below?: React.ReactNode }) {
   const [lead, ...others] = official;
   const rest = others.slice(0, 3);
-  const more = others.slice(3, 6);
 
   return (
     <section className="sci" aria-labelledby="sci-h">
@@ -64,22 +63,7 @@ export function SciNews({ official }: { official: OfficialNews[] }) {
           </div>
         </div>
 
-        {more.length > 0 && (
-          <div className="mrow">
-            {more.map((n) => (
-              <Link key={n.id} href={`/bai-viet/${n.id}`} className="mcard">
-                {n.image ? (
-                  <Image src={n.image} alt="" width={480} height={300} sizes="(max-width: 640px) 100vw, 260px" />
-                ) : (
-                  <div className="mcard-ph" aria-hidden />
-                )}
-                <span className="cat">{n.sectionLabel}</span>
-                <h4>{n.title}</h4>
-                <span className="meta">{n.dateLabel}</span>
-              </Link>
-            ))}
-          </div>
-        )}
+        {below}
       </div>
     </section>
   );

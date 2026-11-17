@@ -65,3 +65,21 @@ class Cluster(BaseModel):
     )
 
     articles: Mapped[list["Article"]] = relationship(back_populates="cluster")
+
+
+class CrawlRun(BaseModel):
+    """One crawl cycle. Persisted so /api/health can tell whether crawling really works
+    (in-process state is useless on serverless, where each request may hit another instance)."""
+
+    __tablename__ = "crawl_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ok: Mapped[bool | None] = mapped_column(nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    fetched: Mapped[int] = mapped_column(Integer, default=0)
+    inserted: Mapped[int] = mapped_column(Integer, default=0)
+    updated: Mapped[int] = mapped_column(Integer, default=0)
+    skipped: Mapped[int] = mapped_column(Integer, default=0)
+    clusters_updated: Mapped[int] = mapped_column(Integer, default=0)

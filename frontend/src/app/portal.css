@@ -2391,3 +2391,194 @@ button.pill {
 .hub-sources {
   margin: 10px 0 8px;
 }
+
+/* ---------- home: "Noi bat the gioi" (Q1 journals + A* conferences) ---------- */
+.portal-main--head {
+  padding-bottom: 48px;
+}
+.portal-main--tail {
+  padding-top: 44px;
+}
+.world {
+  background: linear-gradient(180deg, #e9f0f8 0%, #f3f6fb 100%);
+  border-block: 1px solid var(--line);
+  padding-block: 44px 36px;
+}
+.world-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.world-head .eyebrow {
+  color: var(--red);
+  border-bottom-color: var(--red);
+}
+.world-head h2 {
+  margin: 12px 0 6px;
+  font: 700 clamp(26px, 3vw, 34px) / 1.2 var(--serif);
+  color: var(--navy);
+}
+.world-head p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 38rem;
+}
+.world-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+.wcard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+}
+.wcard:hover {
+  transform: translateY(-4px);
+  border-color: var(--navy-2);
+  box-shadow: 0 16px 32px rgba(11, 42, 74, 0.14);
+}
+.wcard-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.tier {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font: 800 12px var(--sans);
+  letter-spacing: 0.04em;
+}
+.tier--q1 {
+  background: linear-gradient(135deg, #e6b84a, #c8962e);
+  color: #3a2a05;
+}
+.tier--astar {
+  background: linear-gradient(135deg, #6b4de6, #4a33b8);
+  color: #fff;
+}
+.wcard-venue {
+  font: italic 600 14px var(--serif);
+  color: var(--navy);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.wcard h3 {
+  margin: 0;
+  font: 600 16px/1.45 var(--serif);
+  color: #14202e;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wcard:hover h3 {
+  color: var(--red);
+}
+.wcard-auth {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.wcard-meta {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.wcard-meta b {
+  color: var(--navy);
+}
+.wcard-meta svg {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  opacity: 0.5;
+}
+.wcard:hover .wcard-meta svg {
+  opacity: 1;
+  color: var(--red);
+}
+.world-note {
+  margin-top: 18px;
+}
+@media (max-width: 1000px) {
+  .world-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .world-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- world publications ---------- */
+.world-foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
+.world-foot .note { margin: 0; }
+.cta--ghost { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
+.cta--ghost:hover { background: var(--navy); color: #fff; }
+.dtag { display: inline-block; padding: 2px 9px; border-radius: 999px; background: #eaf0f8; color: var(--navy); font: 600 12px var(--sans); }
+.pubs-search { display: flex; gap: 10px; margin-bottom: 18px; }
+.pubs-search input { flex: 1; min-width: 0; padding: 11px 16px; border: 1px solid var(--line); border-radius: 999px; font: 15px var(--sans); background: #fff; }
+.pubs-filters { display: grid; gap: 10px; margin-bottom: 14px; }
+.pill-n { opacity: 0.6; font-size: 11.5px; margin-left: 4px; }
+a.pill { display: inline-block; }
+.pubs-count { color: var(--muted); font-size: 14px; margin: 8px 0 14px; }
+.pubs-count b { color: var(--navy); }
+.pubs-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pub { display: flex; gap: 14px; padding: 16px 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; transition: border-color .2s, box-shadow .2s; }
+.pub:hover { border-color: var(--navy-2); box-shadow: 0 10px 24px rgba(11, 42, 74, .1); }
+.pub .tier { align-self: flex-start; }
+.pub-main { display: grid; gap: 4px; min-width: 0; }
+.pub-title { font: 600 16.5px/1.45 var(--serif); color: #14202e; }
+.pub:hover .pub-title { color: var(--red); }
+.pub-auth { font-size: 13px; color: var(--muted); }
+.pub-meta { font-size: 13px; color: var(--muted); }
+.pub-meta i { font-family: var(--serif); color: var(--navy); font-weight: 600; }
+.pubs-empty { padding: 30px; text-align: center; color: var(--muted); }
+.pubs-pager { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; font-size: 14px; color: var(--muted); }
+
+/* ---------- home: "Bai bao quoc te" panel (under the science news) ---------- */
+.intl { margin-top: 18px; padding: 20px 22px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+.intl-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.intl-head h3 { margin: 0; font: 700 20px var(--serif); color: var(--navy); }
+.intl-head p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.intl-chips { margin: 14px 0 6px; }
+.intl-chips .pill { padding: 5px 12px; font-size: 12.5px; }
+.intl-list { list-style: none; margin: 0; padding: 0; }
+.intl-list li + li { border-top: 1px solid var(--line); }
+.intl-item { display: flex; gap: 12px; padding: 13px 0; }
+.intl-item .tier { align-self: flex-start; margin-top: 2px; }
+.intl-main { display: grid; gap: 3px; min-width: 0; }
+.intl-title { font: 600 15px/1.4 var(--serif); color: #14202e; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.intl-item:hover .intl-title { color: var(--red); }
+.intl-meta { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.intl-meta i { font-family: var(--serif); color: var(--navy); font-weight: 600; }
+.tier--venue { font-size: 12px; padding: 4px 10px; white-space: nowrap; min-width: 4.2em; text-align: center; }
+.portal-main--head { padding-bottom: 64px; }
+
+/* equal-width venue badges; press pane fills exactly the height of the left column (list scrolls) */
+.tier--venue { width: 96px; flex: none; padding-inline: 0; text-align: center; }
+@media (min-width: 1001px) {
+  .latest { contain: size; min-height: 480px; }
+  .latest-list { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #c3cfdd transparent; }
+}

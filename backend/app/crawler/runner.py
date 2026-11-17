@@ -90,19 +90,36 @@ def _upsert_article(
     image_url: str | None,
     published_at: datetime | None,
     stats: CrawlStats,
+    existing_map: dict[str, Article] | None = None,
 ) -> None:
     canonical = canonicalize_url(url)
-    existing = db.scalar(select(Article).where(Article.canonical_url == canonical))
+    # `existing_map` is preloaded with ONE query per source; the per-row SELECT is only a fallback.
+    if existing_map is not None:
+        existing = existing_map.get(canonical)
+    else:
+        existing = db.scalar(select(Article).where(Article.canonical_url == canonical))
     if existing:
-        existing.title = title[:512]
-        existing.summary = summary
-        existing.image_url = image_url
-        if published_at:
+        # Only touch rows that really changed: on a remote DB every UPDATE is a network round trip.
+        changed = False
+        new_title = title[:512]
+        if existing.title != new_title:
+            existing.title = new_title
+            changed = True
+        if existing.summary != summary:
+            existing.summary = summary
+            changed = True
+        if image_url and existing.image_url != image_url:
+            existing.image_url = image_url
+            changed = True
+        if published_at and not _same_instant(existing.published_at, published_at):
             existing.published_at = published_at
-        if topic:
+            changed = True
+        if topic and existing.topic_id != topic.id:
             existing.topic = topic
-        existing.crawled_at = datetime.now(timezone.utc)
-        stats.updated += 1
+            changed = True
+        if changed:
+            existing.crawled_at = datetime.now(timezone.utc)
+            stats.updated += 1
         return
 
     article = Article(
@@ -115,7 +132,20 @@ def _upsert_article(
         published_at=published_at,
     )
     db.add(article)
+    if existing_map is not None:
+        existing_map[canonical] = article
     stats.inserted += 1
+
+
+def _same_instant(a: datetime | None, b: datetime | None) -> bool:
+    """Compare datetimes treating naive values (SQLite) as UTC."""
+    if a is None or b is None:
+        return a is b
+    if a.tzinfo is None:
+        a = a.replace(tzinfo=timezone.utc)
+    if b.tzinfo is None:
+        b = b.replace(tzinfo=timezone.utc)
+    return a == b
 
 
 def first_image_in_html(raw: str | None) -> str | None:
@@ -195,7 +225,7 @@ def purge_offtopic(db: Session) -> int:
 def run_crawl(db: Session) -> CrawlStats:
     stats = CrawlStats()
     sources = ensure_catalog(db)
-    purge_offtopic(db)
+    removed = purge_offtopic(db)
 
     for cfg in ALLOWLIST:
         source = sources[cfg.key]
@@ -207,10 +237,21 @@ def run_crawl(db: Session) -> CrawlStats:
             continue
 
         stats.fetched += len(items)
+        kept = []
         for item in items:
-            if not is_science_tech(item["title"], item.get("summary") or ""):
+            if is_science_tech(item["title"], item.get("summary") or ""):
+                kept.append(item)
+            else:
                 stats.skipped += 1
-                continue
+
+        # One query for all already-known articles of this batch (instead of one per article).
+        urls = {canonicalize_url(item["url"]) for item in kept}
+        existing_map = (
+            {a.canonical_url: a for a in db.scalars(select(Article).where(Article.canonical_url.in_(urls)))}
+            if urls
+            else {}
+        )
+        for item in kept:
             _upsert_article(
                 db,
                 source=source,
@@ -221,8 +262,11 @@ def run_crawl(db: Session) -> CrawlStats:
                 image_url=item.get("image_url"),
                 published_at=item.get("published_at"),
                 stats=stats,
+                existing_map=existing_map,
             )
         db.commit()
 
-    stats.clusters_updated = rebuild_clusters(db)
+    # Clusters depend on the set of articles: rebuild only when it changed. Most 5-minute cycles
+    # bring nothing new, and rebuilding is by far the most expensive step on a remote database.
+    stats.clusters_updated = rebuild_clusters(db) if (stats.inserted or removed) else 0
     return stats

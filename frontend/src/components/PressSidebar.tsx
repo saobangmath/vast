@@ -12,7 +12,7 @@ const ExtIcon = () => (
 export function PressSidebar({ articles }: { articles: ArticleCard[] }) {
   const items = [...articles]
     .sort((a, b) => +new Date(b.published_at ?? 0) - +new Date(a.published_at ?? 0))
-    .slice(0, 8);
+    .slice(0, 14);
 
   return (
     <aside className="latest" aria-labelledby="latest-h">

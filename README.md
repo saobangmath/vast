@@ -60,6 +60,7 @@ Prod env:
 | Project | Variable | Purpose |
 |---------|----------|---------|
 | Frontend (Vercel) | `NEXT_PUBLIC_API_URL` | Backend URL, e.g. `https://<api>.vercel.app` |
+| Frontend (Vercel) | `OPENALEX_API_KEY` | Free key from openalex.org. Powers the homepage block "Nổi bật thế giới" (Q1 journals + A* conferences). Without a key OpenAlex only gives a small daily budget shared per IP, and the block hides itself when it is used up. Results are cached 24 h |
 | Backend (Vercel) | `DATABASE_URL` | Neon Postgres connection string |
 | Backend (Vercel) | `CORS_ORIGINS` / `CORS_ORIGIN_REGEX` | Optional; regex allows `*.vercel.app` by default |
 | GitHub Actions | `CRAWL_API_BASE_URL` (Actions **variable**) | Backend URL for scheduled crawl |

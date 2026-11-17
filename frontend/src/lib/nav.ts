@@ -10,15 +10,7 @@ export type NavItem = {
 export const VAST = "https://vast.gov.vn/";
 
 export const NAV: NavItem[] = [
-  {
-    label: "Trang chủ",
-    href: "/",
-    children: [
-      { label: "Trang Chủ 1 — tin của Viện + cột báo chí", href: "/" },
-      { label: "Trang Chủ 2 — báo chí đầu trang", href: "/?v=2" },
-      { label: "Trang Chủ 3 — như Trang Chủ 2, không banner", href: "/?v=3" },
-    ],
-  },
+  { label: "Trang chủ", href: "/" },
   {
     label: "Cơ cấu tổ chức",
     href: "/co-cau-to-chuc",
@@ -42,6 +34,7 @@ export const NAV: NavItem[] = [
       { label: "Điều tra cơ bản", href: "/tin-tuc/dieu-tra-co-ban" },
       { label: "Tin KH&CN quốc tế", href: "/tin-tuc/khcn-quoc-te" },
       { label: "Tin nóng KHCN (tổng hợp từ báo chí)", href: "/tin-nong-khcn" },
+      { label: "Công bố khoa học thế giới (Q1 & A*)", href: "/cong-bo-khoa-hoc" },
     ],
   },
   { label: "Chương trình KHCN trọng điểm", short: "Chương trình KHCN", href: "/chuong-trinh-khcn-trong-diem" },
