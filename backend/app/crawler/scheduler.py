@@ -4,14 +4,63 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from threading import Lock
+
+from sqlalchemy import delete, select
 
 from app.config import get_settings
 from app.crawler.runner import CrawlStats, run_crawl
 from app.database import SessionLocal
+from app.models import CrawlRun
 
 logger = logging.getLogger(__name__)
+
+# "healthy" = a crawl finished OK recently (3 missed 5-minute cycles tolerated).
+HEALTHY_WITHIN = timedelta(minutes=15)
+# A run without finished_at older than this is considered dead (e.g. the function was killed).
+STUCK_AFTER = timedelta(minutes=10)
+
+
+def _aware(dt: datetime | None) -> datetime | None:
+    if dt is not None and dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _record_start() -> int | None:
+    """Persist the start of a cycle. Never lets bookkeeping break the crawl itself."""
+    try:
+        with SessionLocal() as s:
+            run = CrawlRun(started_at=datetime.now(timezone.utc))
+            s.add(run)
+            s.commit()
+            return run.id
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not record crawl start: %s", exc)
+        return None
+
+
+def _record_end(run_id: int | None, stats: CrawlStats | None, error: str | None) -> None:
+    if run_id is None:
+        return
+    try:
+        with SessionLocal() as s:
+            run = s.get(CrawlRun, run_id)
+            if run is not None:
+                run.finished_at = datetime.now(timezone.utc)
+                run.ok = error is None
+                run.error = error[:2000] if error else None
+                if stats is not None:
+                    run.fetched = stats.fetched
+                    run.inserted = stats.inserted
+                    run.updated = stats.updated
+                    run.skipped = stats.skipped
+                    run.clusters_updated = stats.clusters_updated
+            s.execute(delete(CrawlRun).where(CrawlRun.id < run_id - 200))  # keep the table small
+            s.commit()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not record crawl end: %s", exc)
 
 _lock = Lock()
 _task: asyncio.Task | None = None
@@ -22,8 +71,53 @@ _last_stats: CrawlStats | None = None
 _running = False
 
 
+def _db_status() -> dict:
+    """Crawl health from the persisted runs (works on serverless, unlike in-process state)."""
+    try:
+        with SessionLocal() as s:
+            latest = s.scalar(select(CrawlRun).order_by(CrawlRun.id.desc()).limit(1))
+            last_ok = s.scalar(select(CrawlRun).where(CrawlRun.ok.is_(True)).order_by(CrawlRun.id.desc()).limit(1))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not read crawl runs: %s", exc)
+        return {}
+    now = datetime.now(timezone.utc)
+    out: dict = {"healthy": False, "last_success_at": None, "minutes_since_last_success": None}
+    if latest is not None:
+        started, finished = _aware(latest.started_at), _aware(latest.finished_at)
+        out.update(
+            running=finished is None and now - started < STUCK_AFTER,
+            last_started_at=started.isoformat() if started else None,
+            last_finished_at=finished.isoformat() if finished else None,
+            last_error=latest.error,
+            last_stats=(
+                {
+                    "fetched": latest.fetched,
+                    "inserted": latest.inserted,
+                    "updated": latest.updated,
+                    "skipped": latest.skipped,
+                    "clusters_updated": latest.clusters_updated,
+                }
+                if latest.ok
+                else None
+            ),
+        )
+    if last_ok is not None and last_ok.finished_at is not None:
+        done = _aware(last_ok.finished_at)
+        out["last_success_at"] = done.isoformat()
+        out["minutes_since_last_success"] = int((now - done).total_seconds() // 60)
+        out["healthy"] = now - done < HEALTHY_WITHIN
+    return out
+
+
 def scheduler_status() -> dict:
     settings = get_settings()
+    return {
+        **_memory_status(settings),
+        **_db_status(),
+    }
+
+
+def _memory_status(settings) -> dict:
     return {
         "enabled": settings.scheduler_should_run,
         "vercel": settings.is_vercel,
@@ -57,11 +151,13 @@ def run_crawl_safe() -> CrawlStats | None:
     _running = True
     _last_started_at = datetime.now(timezone.utc)
     _last_error = None
+    run_id = _record_start()
     db = SessionLocal()
     try:
         stats = run_crawl(db)
         _last_stats = stats
         _last_finished_at = datetime.now(timezone.utc)
+        _record_end(run_id, stats, None)
         logger.info(
             "Crawl finished fetched=%s inserted=%s updated=%s skipped=%s clusters=%s",
             stats.fetched,
@@ -74,6 +170,7 @@ def run_crawl_safe() -> CrawlStats | None:
     except Exception as exc:  # noqa: BLE001 - keep scheduler alive
         _last_error = str(exc)
         _last_finished_at = datetime.now(timezone.utc)
+        _record_end(run_id, None, str(exc))
         logger.exception("Crawl failed: %s", exc)
         return None
     finally:

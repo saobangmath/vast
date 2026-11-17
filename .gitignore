@@ -13,3 +13,4 @@ frontend/.vercel
 backend/.vercel
 .crawl-cache/
 crawl*.log
+next-start.log

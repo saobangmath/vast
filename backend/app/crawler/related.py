@@ -35,12 +35,9 @@ def rebuild_clusters(db: Session) -> int:
     if not articles:
         return 0
 
-    # Clear old clusters
-    for article in articles:
-        article.cluster_id = None
-    db.flush()
-    db.execute(delete(Cluster))
-    db.flush()
+    # Old clusters are deleted only AFTER the articles point at the new ones, so the whole rebuild
+    # is one flush (new clusters + article updates) instead of one round trip per cluster.
+    old_cluster_ids = list(db.scalars(select(Cluster.id)).all())
 
     clusters: list[tuple[Cluster, set[str], list[Article]]] = []
     for article in articles:
@@ -61,7 +58,6 @@ def rebuild_clusters(db: Session) -> int:
         else:
             cluster = Cluster(representative_title=article.title, article_count=1)
             db.add(cluster)
-            db.flush()
             article.cluster = cluster
             clusters.append((cluster, set(tokens), [article]))
 
@@ -73,5 +69,8 @@ def rebuild_clusters(db: Session) -> int:
             article.hot_score = hot_score(article.related_count, article.published_at)
         updated += 1
 
+    db.flush()
+    if old_cluster_ids:
+        db.execute(delete(Cluster).where(Cluster.id.in_(old_cluster_ids)))
     db.commit()
     return updated

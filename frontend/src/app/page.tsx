@@ -1,7 +1,7 @@
-import { Suspense } from "react";
-import { HomeVariants, type HomeData } from "@/components/HomeVariants";
+import { HomeContent, type HomeData } from "@/components/HomeContent";
 import { fetchNew } from "@/lib/api";
 import { formatDate, getIndex, sectionName } from "@/lib/content";
+import { homePapers, paperLabel } from "@/lib/papers";
 
 async function loadPress() {
   try {
@@ -33,23 +33,29 @@ function loadHome(): HomeData {
         }
       : null,
     science,
-    activity: activity
-      .filter((n) => n.id !== featured?.id)
-      .slice(0, 4)
-      .map((n) => ({ id: n.id, title: n.title })),
   };
 }
 
 export default async function HomePage() {
   const articles = await loadPress();
   const home = loadHome();
+  const { byTopic: rawByTopic, topics, total } = homePapers();
+  const byTopic = Object.fromEntries(
+    Object.entries(rawByTopic).map(([t, ps]) => [
+      t,
+      ps.map((p) => ({
+        id: p.id,
+        title: p.title,
+        authors: p.authors,
+        url: p.url,
+        label: paperLabel(p, p.venueInfo),
+        tier: p.venueInfo.tier,
+      })),
+    ]),
+  );
   const today = new Intl.DateTimeFormat("vi-VN", { dateStyle: "full", timeZone: "Asia/Ho_Chi_Minh" }).format(
     new Date(),
   );
 
-  return (
-    <Suspense fallback={<div className="wrap" style={{ padding: "24px 0" }}>Đang tải Trang chủ…</div>}>
-      <HomeVariants articles={articles} today={today} home={home} />
-    </Suspense>
-  );
+  return <HomeContent articles={articles} today={today} home={home} intl={{ byTopic, topics: topics.slice(0, 6), total }} />;
 }
