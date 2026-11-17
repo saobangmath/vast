@@ -87,7 +87,7 @@ const clean = (s) => decode(decode(s.replace(/<[^>]+>/g, ""))).replace(/\s+/g, "
 
 // ---- domain tagging ---------------------------------------------------------------------------
 const RX = {
-  robot: /\b(robot\w*|manipulat\w+|locomotion|autonomous driving|navigation|control polic\w+|embodied|reinforcement learning|motion planning)\b/gi,
+  robot: /\b(robot\w*|manipulat\w+|locomotion|autonomous driving|navigation|control polic\w+|embodied|motion planning)\b/gi,
   cv: /\b(image\w*|video\w*|visual\w*|vision|3d|point clouds?|segmentation|object detection|camera|depth|pose|rendering|nerf|gaussian splatting|diffusion models?|face|pixel\w*|multimodal|text-to-image)\b/gi,
   nlp: /\b(language models?|llms?|text|translation|question answering|dialogue|reasoning|prompt\w*|tokens?|summari[sz]\w+|retrieval|nlp|speech|multilingual|instruction)\b/gi,
   bio: /\b(cancer|patients?|cells?|genes?|genom\w+|proteins?|disease|virus|viral|immun\w+|clinical|brain|neuron\w*|bacteri\w+|dna|rna|tumou?rs?|mice|mouse|vaccine|antibod\w+|metabol\w+|stem|embryo\w*|infection|neural circuit|synap\w+|human|plants?|crops?|evolution\w*|genetic\w*|ecolog\w+|flowering|fish|birds?|insects?|yeast|organisms?)\b/gi,
@@ -98,22 +98,23 @@ const RX = {
   ai: /\b(machine learning|deep learning|neural networks?|artificial intelligence|transformers?|large language|foundation model)\b/gi,
 };
 const count = (rx, s) => (s.match(rx) || []).length;
+// A paper can carry several topic tags (max 3). Venue-specific tag first (e.g. CVPR -> Thị giác máy tính),
+// then every other topic whose keywords appear in the title / abstract.
 function classify(venue, title, abstract = "") {
   const s = `${title} ${abstract}`;
-  if (!venue.classify) return venue.defaultDomain;
-  if (venue.kind === "conference") {
-    const r = count(RX.robot, s), c = count(RX.cv, s), n = count(RX.nlp, s), b = count(RX.bio, s);
-    const best = Math.max(r, c, n, b);
-    if (best < 1) return "ml";
-    if (b === best && b > 1) return "bio";
-    if (r === best) return "robot";
-    if (c >= n) return "cv";
-    return "nlp";
-  }
-  const scores = ["bio", "phys", "mat", "earth", "space", "ai"].map((k) => [k, count(RX[k], s)]);
-  scores.sort((a, b) => b[1] - a[1]);
-  if (scores[0][1] < 1) return venue.defaultDomain;
-  return scores[0][0];
+  const candidates =
+    venue.kind === "conference"
+      ? [["cv", 1], ["nlp", 1], ["robot", 1], ["bio", 2], ["mat", 2], ["earth", 2], ["space", 2], ["phys", 2]]
+      : [["bio", 1], ["phys", 1], ["mat", 1], ["earth", 1], ["space", 1], ["ai", 1], ["cv", 1], ["nlp", 1]];
+  const found = candidates
+    .map(([k, min]) => [k, count(RX[k], s), min])
+    .filter(([, n, min]) => n >= min)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k]) => k);
+  const forced = !venue.classify || venue.slug === "cell" ? venue.defaultDomain : venue.kind === "conference" ? "ml" : null;
+  const tags = forced ? [forced, ...found.filter((k) => k !== forced)] : found;
+  if (!tags.length) tags.push(venue.defaultDomain);
+  return tags.slice(0, 3);
 }
 
 // ---- crawlers: each returns [{title, authors[], url, abstract?, doi?, month?}] ----------------
@@ -251,7 +252,7 @@ for (const [slug, year, evMonth] of JOBS) {
     for (const r of rows) {
       if (!r.title || seen.has(r.url)) continue;
       seen.add(r.url);
-      const domainKey = classify(v, r.title, r.abstract);
+      const domainKeys = classify(v, r.title, r.abstract);
       const y = r.year || year;
       const m = r.month || (r.monthName && MONTHS[r.monthName]) || evMonth || 1;
       items.push({
@@ -262,7 +263,7 @@ for (const [slug, year, evMonth] of JOBS) {
         eventYear: year,
         year: y,
         month: m,
-        domain: D[domainKey],
+        domains: domainKeys.map((k) => D[k]),
         url: r.url,
       });
       n++;

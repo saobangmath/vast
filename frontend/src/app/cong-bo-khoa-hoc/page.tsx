@@ -81,7 +81,7 @@ export default async function PapersPage({ searchParams }: { searchParams: SP })
                   <span className="pub-title">{p.title}</span>
                   {p.authors && <span className="pub-auth">{p.authors}</span>}
                   <span className="pub-meta">
-                    <i>{p.venueInfo.full}</i> · {MONTH(p.month)}/{p.year} · <span className="dtag">{p.domain}</span>
+                    <i>{p.venueInfo.full}</i> · {MONTH(p.month)}/{p.year} · {p.domains.map((d) => (<span key={d} className="dtag">{d}</span>))}
                   </span>
                 </span>
               </a>

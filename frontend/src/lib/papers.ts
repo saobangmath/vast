@@ -15,7 +15,7 @@ export type Paper = {
   eventYear: number;
   year: number;
   month: number;
-  domain: string;
+  domains: string[];
   url: string;
 };
 type PapersFile = { generated: string; venues: Venue[]; items: Paper[] };
@@ -87,13 +87,13 @@ export function queryPapers({ q, kind, venue, domain, year, page = 1 }: PaperQue
     return true;
   });
   const yearOk = (p: Paper) => !year || paperYear(p, vmap.get(p.venue)?.kind) === year;
-  const filtered = base.filter((p) => (!domain || p.domain === domain) && yearOk(p));
+  const filtered = base.filter((p) => (!domain || p.domains.includes(domain)) && yearOk(p));
 
   const domainCounts: Record<string, number> = {};
-  for (const p of base) if (yearOk(p)) domainCounts[p.domain] = (domainCounts[p.domain] || 0) + 1;
+  for (const p of base) if (yearOk(p)) for (const d of p.domains) domainCounts[d] = (domainCounts[d] || 0) + 1;
   const yearCounts: Record<number, number> = {};
   for (const p of base) {
-    if (domain && p.domain !== domain) continue;
+    if (domain && !p.domains.includes(domain)) continue;
     const y = paperYear(p, vmap.get(p.venue)?.kind);
     yearCounts[y] = (yearCounts[y] || 0) + 1;
   }
@@ -147,9 +147,9 @@ export function homePapers(perTopic = 4): { byTopic: Record<string, HomePaper[]>
   const vmap = new Map(venues.map((v) => [v.slug, v]));
   const wrap = (ps: Paper[]) => ps.map((p) => ({ ...p, venueInfo: vmap.get(p.venue)! })).filter((p) => p.venueInfo);
   const counts = new Map<string, number>();
-  for (const p of items) counts.set(p.domain, (counts.get(p.domain) || 0) + 1);
+  for (const p of items) for (const d of p.domains) counts.set(d, (counts.get(d) || 0) + 1);
   const topics = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([d]) => d);
   const byTopic: Record<string, HomePaper[]> = { "": wrap(diverse(items, perTopic)) };
-  for (const t of topics) byTopic[t] = wrap(diverse(items.filter((p) => p.domain === t), perTopic));
+  for (const t of topics) byTopic[t] = wrap(diverse(items.filter((p) => p.domains.includes(t)), perTopic));
   return { byTopic, topics, total: items.length };
 }
